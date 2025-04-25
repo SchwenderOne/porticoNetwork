@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { X } from 'lucide-react';
-import { Cluster, insertContactSchema } from '@shared/schema';
+import { Cluster, insertContactSchema, Node as NetworkNode } from '@shared/schema';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -27,7 +27,7 @@ interface AddContactModalProps {
   isOpen: boolean;
   onClose: () => void;
   clusters: Cluster[];
-  contact?: Node; // Optional contact for editing mode
+  contact?: NetworkNode; // Optional contact for editing mode
   isEdit?: boolean; // Flag to indicate edit mode
 }
 

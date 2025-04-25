@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Node, NetworkData, Cluster, Contact } from '@shared/schema';
+import { Node as NetworkNode, NetworkData, Cluster, Contact } from '@shared/schema';
 import HeroTitle from '@/components/HeroTitle';
 import FilterSection from '@/components/FilterSection';
 import GraphCanvas from '@/components/GraphCanvas';
@@ -12,7 +12,7 @@ const NetworkPage: React.FC = () => {
   // State for UI controls
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [activeContact, setActiveContact] = useState<Node | null>(null);
+  const [activeContact, setActiveContact] = useState<NetworkNode | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilters, setActiveFilters] = useState<number[]>([]);
@@ -36,7 +36,7 @@ const NetworkPage: React.FC = () => {
   }, [clusters, activeFilters.length]);
 
   // Handle node click
-  const handleNodeClick = (node: Node) => {
+  const handleNodeClick = (node: NetworkNode) => {
     if (node.type === 'contact') {
       setActiveContact(node);
       setIsDrawerOpen(true);
@@ -58,7 +58,7 @@ const NetworkPage: React.FC = () => {
   };
 
   // Handle edit button click
-  const handleEditClick = (contact: Node) => {
+  const handleEditClick = (contact: NetworkNode) => {
     setActiveContact(contact);
     setIsEditMode(true);
     setIsAddModalOpen(true);
