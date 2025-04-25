@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useMemo } from 'react';
-import { NetworkData, Node } from '@shared/schema';
+import { NetworkData, Node as NetworkNode } from '@shared/schema';
 import { Loader2, Plus } from 'lucide-react';
 import { initializeNetworkGraph } from '@/lib/d3-utils';
 
@@ -8,7 +8,7 @@ interface GraphCanvasProps {
   isLoading: boolean;
   filteredClusters: number[];
   searchTerm: string;
-  onNodeClick: (node: Node) => void;
+  onNodeClick: (node: NetworkNode) => void;
   onAddClick: () => void;
 }
 

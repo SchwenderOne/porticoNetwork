@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, Edit, Trash2, Mail, Phone, Bookmark, Users, ExternalLink } from 'lucide-react';
-import { Node, Contact, Cluster } from '@shared/schema';
+import { Node as NetworkNode, Contact, Cluster } from '@shared/schema';
 import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -12,9 +12,9 @@ import { Badge } from '@/components/ui/badge';
 interface ContactDetailDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  contact: Node | null;
+  contact: NetworkNode | null;
   clusters: Cluster[];
-  onEditClick: (contact: Node) => void;
+  onEditClick: (contact: NetworkNode) => void;
 }
 
 const ContactDetailDrawer: React.FC<ContactDetailDrawerProps> = ({

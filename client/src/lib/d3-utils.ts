@@ -1,11 +1,11 @@
 import * as d3 from 'd3';
-import { NetworkData, Node } from '@shared/schema';
+import { NetworkData, Node as NetworkNode } from '@shared/schema';
 
 // Simple implementation to avoid TypeScript errors
 export function initializeNetworkGraph(
   svgElement: SVGSVGElement,
   data: NetworkData,
-  onNodeClick: (node: Node) => void
+  onNodeClick: (node: NetworkNode) => void
 ): () => void {
   // Clear the SVG
   d3.select(svgElement).selectAll("*").remove();
