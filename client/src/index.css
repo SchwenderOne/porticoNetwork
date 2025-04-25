@@ -1,8 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
   --background: 0 0% 100%;
@@ -80,7 +80,7 @@ body {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
 }
 
-.cluster-node {
+.cluster-node, .portico-node {
   cursor: pointer;
   border: 1px solid rgba(255, 255, 255, 0.8);
   transition: all 0.3s ease;
@@ -89,6 +89,15 @@ body {
 .cluster-node:hover {
   transform: scale(1.05);
   box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+}
+
+.portico-node {
+  border: 2px solid rgba(255, 255, 255, 0.9);
+}
+
+.portico-node:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 20px rgba(255, 144, 104, 0.4);
 }
 
 .contact-node {

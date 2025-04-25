@@ -49,11 +49,19 @@ const AddContactModal: React.FC<AddContactModalProps> = ({ isOpen, onClose, clus
   const onSubmit = async (data: FormValues) => {
     try {
       await apiRequest('POST', '/api/contacts', data);
-      queryClient.invalidateQueries({ queryKey: ['/api/network'] });
+      
+      // Invalidate both network and contacts queries to ensure fresh data
+      await queryClient.invalidateQueries({ queryKey: ['/api/network'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/contacts'] });
+      
+      // Force a refetch to ensure the new data is loaded
+      await queryClient.refetchQueries({ queryKey: ['/api/network'] });
+      
       toast({
         title: "Kontakt hinzugefügt",
         description: `${data.name} wurde erfolgreich zum Netzwerk hinzugefügt.`,
       });
+      
       form.reset();
       onClose();
     } catch (error) {

@@ -17,15 +17,30 @@ export function initializeNetworkGraph(
   const linksGroup = svg.append("g").attr("class", "links");
   const nodesGroup = svg.append("g").attr("class", "nodes");
   
+  // Pin the Portico node to the center
+  const porticoNode = data.nodes.find(n => n.id === "portico");
+  if (porticoNode) {
+    porticoNode.fx = width / 2;
+    porticoNode.fy = height / 2;
+  }
+  
   // Create a force simulation
   const simulation = d3.forceSimulation<Node>(data.nodes)
     .force("link", d3.forceLink<Node, any>(data.links)
       .id(d => d.id)
-      .distance(150))
-    .force("charge", d3.forceManyBody().strength(-400))
+      .distance(d => {
+        // Increase distance for links connected to Portico
+        if (d.source.id === "portico" || d.target.id === "portico") {
+          return 200;
+        }
+        return 150;
+      }))
+    .force("charge", d3.forceManyBody().strength(d => 
+      d.id === "portico" ? -800 : -400
+    ))
     .force("center", d3.forceCenter(width / 2, height / 2))
     .force("collision", d3.forceCollide().radius(d => 
-      d.type === 'cluster' ? 70 : 85
+      d.id === "portico" ? 100 : (d.type === 'cluster' ? 70 : 85)
     ));
   
   // Create the links
@@ -53,11 +68,11 @@ export function initializeNetworkGraph(
   // Add cluster nodes (circles)
   node.filter(d => d.type === 'cluster')
     .append("circle")
-    .attr("r", 70)
+    .attr("r", d => d.id === "portico" ? 90 : 70)
     .attr("fill", d => d.color || 'rgba(200, 200, 200, 0.45)')
-    .attr("class", "cluster-node")
+    .attr("class", d => d.id === "portico" ? "portico-node" : "cluster-node")
     .attr("stroke", "rgba(255, 255, 255, 0.8)")
-    .attr("stroke-width", 1);
+    .attr("stroke-width", d => d.id === "portico" ? 2 : 1);
   
   // Add cluster node labels
   node.filter(d => d.type === 'cluster')
@@ -66,7 +81,8 @@ export function initializeNetworkGraph(
     .attr("text-anchor", "middle")
     .attr("dy", ".35em")
     .attr("fill", "#0E1525")
-    .attr("font-weight", "600");
+    .attr("font-weight", d => d.id === "portico" ? "700" : "600")
+    .attr("font-size", d => d.id === "portico" ? "16px" : "14px");
   
   // Add contact nodes (rectangles)
   node.filter(d => d.type === 'contact')
@@ -137,8 +153,12 @@ export function initializeNetworkGraph(
   
   function dragended(event: d3.D3DragEvent<SVGGElement, Node, Node>, d: Node) {
     if (!event.active) simulation.alphaTarget(0);
-    d.fx = null;
-    d.fy = null;
+    
+    // Keep Portico node pinned to center, but let other nodes be free
+    if (d.id !== "portico") {
+      d.fx = null;
+      d.fy = null;
+    }
   }
   
   // Return a cleanup function

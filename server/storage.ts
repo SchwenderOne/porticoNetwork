@@ -210,8 +210,17 @@ export class MemStorage implements IStorage {
     const contacts = await this.getContacts();
     const connections = await this.getConnections();
     
+    // Create a central Portico node
+    const porticoNode: Node = {
+      id: "portico",
+      type: "cluster",
+      name: "Portico",
+      color: "rgba(255, 144, 104, 0.6)"
+    };
+    
     // Map clusters and contacts to nodes
     const nodes: Node[] = [
+      porticoNode,
       ...clusters.map(cluster => ({
         id: cluster.id.toString(),
         type: 'cluster' as const,
@@ -223,9 +232,9 @@ export class MemStorage implements IStorage {
         type: 'contact' as const,
         name: contact.name,
         role: contact.role,
-        email: contact.email,
-        phone: contact.phone,
-        notes: contact.notes,
+        email: contact.email || undefined,
+        phone: contact.phone || undefined,
+        notes: contact.notes || undefined,
         clusterId: contact.clusterId
       }))
     ];
@@ -239,7 +248,19 @@ export class MemStorage implements IStorage {
       targetType: connection.targetType as any
     }));
     
-    return { nodes, links };
+    // Create links from Portico to each cluster
+    const porticoLinks: Link[] = clusters.map((cluster, index) => ({
+      id: `portico-${cluster.id}`,
+      source: "portico",
+      target: cluster.id.toString(),
+      sourceType: "cluster",
+      targetType: "cluster"
+    }));
+    
+    return { 
+      nodes, 
+      links: [...links, ...porticoLinks]
+    };
   }
 }
 
