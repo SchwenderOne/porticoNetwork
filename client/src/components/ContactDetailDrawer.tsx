@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Edit, Trash2 } from 'lucide-react';
+import { X, Edit, Trash2, Mail, Phone, Bookmark, Users, ExternalLink } from 'lucide-react';
 import { Node, Contact, Cluster } from '@shared/schema';
 import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
@@ -7,6 +7,7 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 
 interface ContactDetailDrawerProps {
   isOpen: boolean;
@@ -28,7 +29,7 @@ const ContactDetailDrawer: React.FC<ContactDetailDrawerProps> = ({
 
   // Get related contacts (contacts in the same cluster)
   const relatedContactsQuery = useQuery({
-    queryKey: contact?.clusterId ? ['/api/contacts', { clusterId: contact.clusterId }] : null,
+    queryKey: contact?.clusterId ? ['/api/contacts', { clusterId: contact.clusterId }] : ['/api/contacts', {}],
     enabled: !!contact?.clusterId,
   });
 
@@ -121,54 +122,89 @@ const ContactDetailDrawer: React.FC<ContactDetailDrawerProps> = ({
               </div>
               
               <div className="mb-4">
-                <h5 className="text-sm font-medium text-gray-500 mb-2">Cluster</h5>
-                <div 
-                  className="inline-block px-3 py-1 rounded-full text-sm"
-                  style={{ backgroundColor: getClusterColor(contact.clusterId) }}
+                <h5 className="text-sm font-medium text-gray-500 mb-2 flex items-center">
+                  <Users className="h-4 w-4 mr-1" />
+                  Cluster
+                </h5>
+                <Badge 
+                  className="text-white"
+                  style={{ 
+                    backgroundColor: getClusterColor(contact.clusterId),
+                    borderColor: getClusterColor(contact.clusterId)
+                  }}
                 >
                   {getClusterName(contact.clusterId)}
-                </div>
+                </Badge>
               </div>
               
               {(contact.email || contact.phone) && (
                 <div className="mb-4">
-                  <h5 className="text-sm font-medium text-gray-500 mb-2">Kontaktinformationen</h5>
-                  {contact.email && <p className="text-gray-700 mb-1">{contact.email}</p>}
-                  {contact.phone && <p className="text-gray-700">{contact.phone}</p>}
+                  <h5 className="text-sm font-medium text-gray-500 mb-2 flex items-center">
+                    <ExternalLink className="h-4 w-4 mr-1" />
+                    Kontaktinformationen
+                  </h5>
+                  
+                  {contact.email && (
+                    <div className="flex items-center mb-2 text-gray-700">
+                      <Mail className="h-4 w-4 mr-2 text-gray-500" />
+                      <a href={`mailto:${contact.email}`} className="hover:underline">
+                        {contact.email}
+                      </a>
+                    </div>
+                  )}
+                  
+                  {contact.phone && (
+                    <div className="flex items-center text-gray-700">
+                      <Phone className="h-4 w-4 mr-2 text-gray-500" />
+                      <a href={`tel:${contact.phone}`} className="hover:underline">
+                        {contact.phone}
+                      </a>
+                    </div>
+                  )}
                 </div>
               )}
               
               {contact.notes && (
                 <div className="mb-4">
-                  <h5 className="text-sm font-medium text-gray-500 mb-2">Notizen</h5>
-                  <p className="text-gray-700">{contact.notes}</p>
+                  <h5 className="text-sm font-medium text-gray-500 mb-2 flex items-center">
+                    <Bookmark className="h-4 w-4 mr-1" />
+                    Notizen
+                  </h5>
+                  <div className="glass p-3 rounded-lg text-gray-700">
+                    {contact.notes}
+                  </div>
                 </div>
               )}
             </div>
             
             {/* Related Contacts */}
             {filteredRelatedContacts.length > 0 && (
-              <div>
-                <h5 className="text-sm font-medium text-gray-500 mb-2">Verbundene Kontakte</h5>
-                {filteredRelatedContacts.map((relatedContact) => (
-                  <div 
-                    key={relatedContact.id} 
-                    className="contact-node glass p-3 rounded-lg mb-2 flex items-center"
-                  >
+              <div className="mb-4">
+                <h5 className="text-sm font-medium text-gray-500 mb-2 flex items-center">
+                  <Users className="h-4 w-4 mr-1" />
+                  Kontakte im selben Cluster ({filteredRelatedContacts.length})
+                </h5>
+                <div className="glass p-2 rounded-lg">
+                  {filteredRelatedContacts.map((relatedContact) => (
                     <div 
-                      className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-semibold mr-3"
-                      style={{ 
-                        background: getClusterColor(relatedContact.clusterId)
-                      }}
+                      key={relatedContact.id} 
+                      className="contact-node p-3 rounded-lg mb-2 flex items-center hover:bg-white/20 transition-colors"
                     >
-                      {getInitials(relatedContact.name)}
+                      <div 
+                        className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-semibold mr-3 shadow-sm"
+                        style={{ 
+                          background: getClusterColor(relatedContact.clusterId)
+                        }}
+                      >
+                        {getInitials(relatedContact.name)}
+                      </div>
+                      <div>
+                        <p className="font-medium">{relatedContact.name}</p>
+                        <p className="text-xs text-gray-600">{relatedContact.role}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium">{relatedContact.name}</p>
-                      <p className="text-xs text-gray-600">{relatedContact.role}</p>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
           </div>

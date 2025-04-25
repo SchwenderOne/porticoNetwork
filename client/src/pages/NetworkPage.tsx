@@ -18,13 +18,14 @@ const NetworkPage: React.FC = () => {
   const [activeFilters, setActiveFilters] = useState<number[]>([]);
   
   // Fetch network data
-  const { data: networkData, isLoading, refetch: refetchNetwork } = useQuery({
+  const { data: networkData, isLoading, refetch: refetchNetwork } = useQuery<NetworkData>({
     queryKey: ['/api/network'],
   });
   
   // Fetch clusters for filters and add form
-  const { data: clusters } = useQuery({
+  const { data: clusters } = useQuery<Cluster[]>({
     queryKey: ['/api/clusters'],
+    placeholderData: [], // Prevent 'undefined' errors
   });
 
   // Initialize active filters with all clusters when data is loaded
@@ -97,7 +98,7 @@ const NetworkPage: React.FC = () => {
         }}
         clusters={clusters || []}
         isEdit={isEditMode}
-        contact={isEditMode ? activeContact : undefined}
+        contact={isEditMode && activeContact ? activeContact : undefined}
       />
       
       <ContactDetailDrawer 
