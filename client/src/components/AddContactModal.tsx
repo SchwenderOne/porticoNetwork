@@ -27,6 +27,8 @@ interface AddContactModalProps {
   isOpen: boolean;
   onClose: () => void;
   clusters: Cluster[];
+  contact?: Node; // Optional contact for editing mode
+  isEdit?: boolean; // Flag to indicate edit mode
 }
 
 const AddContactModal: React.FC<AddContactModalProps> = ({ isOpen, onClose, clusters }) => {

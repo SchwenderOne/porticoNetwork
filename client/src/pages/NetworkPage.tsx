@@ -18,7 +18,7 @@ const NetworkPage: React.FC = () => {
   const [activeFilters, setActiveFilters] = useState<number[]>([]);
   
   // Fetch network data
-  const { data: networkData, isLoading } = useQuery({
+  const { data: networkData, isLoading, refetch: refetchNetwork } = useQuery({
     queryKey: ['/api/network'],
   });
   
