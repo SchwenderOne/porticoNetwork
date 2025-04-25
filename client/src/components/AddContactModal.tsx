@@ -31,12 +31,26 @@ interface AddContactModalProps {
   isEdit?: boolean; // Flag to indicate edit mode
 }
 
-const AddContactModal: React.FC<AddContactModalProps> = ({ isOpen, onClose, clusters }) => {
+const AddContactModal: React.FC<AddContactModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  clusters, 
+  contact, 
+  isEdit = false 
+}) => {
   const { toast } = useToast();
   
+  // Set up form with existing contact data if in edit mode
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
+    defaultValues: isEdit && contact ? {
+      name: contact.name,
+      role: contact.role || '',
+      email: contact.email || '',
+      phone: contact.phone || '',
+      notes: contact.notes || '',
+      clusterId: contact.clusterId,
+    } : {
       name: '',
       role: '',
       email: '',
@@ -48,11 +62,31 @@ const AddContactModal: React.FC<AddContactModalProps> = ({ isOpen, onClose, clus
   
   const isSubmitting = form.formState.isSubmitting;
   
+  // Use effect to reset form when opened in edit mode
+  React.useEffect(() => {
+    if (isOpen && isEdit && contact) {
+      form.reset({
+        name: contact.name,
+        role: contact.role || '',
+        email: contact.email || '',
+        phone: contact.phone || '',
+        notes: contact.notes || '',
+        clusterId: contact.clusterId,
+      });
+    }
+  }, [isOpen, isEdit, contact, form]);
+
   const onSubmit = async (data: FormValues) => {
     try {
-      await apiRequest('POST', '/api/contacts', data);
+      if (isEdit && contact) {
+        // Update existing contact
+        await apiRequest('PATCH', `/api/contacts/${contact.id}`, data);
+      } else {
+        // Create new contact
+        await apiRequest('POST', '/api/contacts', data);
+      }
       
-      // Invalidate both network and contacts queries to ensure fresh data
+      // Invalidate queries to ensure fresh data
       await queryClient.invalidateQueries({ queryKey: ['/api/network'] });
       await queryClient.invalidateQueries({ queryKey: ['/api/contacts'] });
       
@@ -60,17 +94,21 @@ const AddContactModal: React.FC<AddContactModalProps> = ({ isOpen, onClose, clus
       await queryClient.refetchQueries({ queryKey: ['/api/network'] });
       
       toast({
-        title: "Kontakt hinzugefügt",
-        description: `${data.name} wurde erfolgreich zum Netzwerk hinzugefügt.`,
+        title: isEdit ? "Kontakt aktualisiert" : "Kontakt hinzugefügt",
+        description: isEdit 
+          ? `${data.name} wurde erfolgreich aktualisiert.`
+          : `${data.name} wurde erfolgreich zum Netzwerk hinzugefügt.`,
       });
       
       form.reset();
       onClose();
     } catch (error) {
-      console.error('Failed to add contact:', error);
+      console.error('Failed to save contact:', error);
       toast({
         title: "Fehler",
-        description: "Der Kontakt konnte nicht hinzugefügt werden.",
+        description: isEdit 
+          ? "Der Kontakt konnte nicht aktualisiert werden."
+          : "Der Kontakt konnte nicht hinzugefügt werden.",
         variant: "destructive",
       });
     }
@@ -82,7 +120,9 @@ const AddContactModal: React.FC<AddContactModalProps> = ({ isOpen, onClose, clus
     <div className="fixed inset-0 bg-black bg-opacity-30 z-50 flex items-center justify-center">
       <div className="glass rounded-2xl p-6 max-w-md w-full mx-4">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-semibold">Neuen Kontakt hinzufügen</h3>
+          <h3 className="text-xl font-semibold">
+            {isEdit ? 'Kontakt bearbeiten' : 'Neuen Kontakt hinzufügen'}
+          </h3>
           <button 
             className="text-gray-500 hover:text-gray-700"
             onClick={onClose}
@@ -226,7 +266,10 @@ const AddContactModal: React.FC<AddContactModalProps> = ({ isOpen, onClose, clus
                 className="bg-gradient-to-r from-blue-500 to-purple-500 hover:opacity-90"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? 'Wird hinzugefügt...' : 'Hinzufügen'}
+                {isSubmitting 
+                  ? (isEdit ? 'Wird gespeichert...' : 'Wird hinzugefügt...') 
+                  : (isEdit ? 'Speichern' : 'Hinzufügen')
+                }
               </Button>
             </div>
           </form>

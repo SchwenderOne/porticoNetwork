@@ -92,8 +92,12 @@ const NetworkPage: React.FC = () => {
         onClose={() => {
           setIsAddModalOpen(false);
           setIsEditMode(false);
+          // Force refresh of network data after modal is closed
+          refetchNetwork();
         }}
         clusters={clusters || []}
+        isEdit={isEditMode}
+        contact={isEditMode ? activeContact : undefined}
       />
       
       <ContactDetailDrawer 
