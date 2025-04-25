@@ -53,14 +53,22 @@ export function initializeNetworkGraph(
       onNodeClick(d);
     });
   
-  // Add cluster nodes (circles)
+  // Add cluster nodes (rounded rectangles with glassmorphism)
   node.filter((d: any) => d.type === 'cluster')
-    .append("circle")
-    .attr("r", (d: any) => d.id === "portico" ? 90 : 70)
-    .attr("fill", (d: any) => d.color || 'rgba(200, 200, 200, 0.45)')
+    .append("rect")
+    .attr("width", (d: any) => d.id === "portico" ? 200 : 180)
+    .attr("height", (d: any) => d.id === "portico" ? 140 : 120)
+    .attr("x", (d: any) => d.id === "portico" ? -100 : -90)
+    .attr("y", (d: any) => d.id === "portico" ? -70 : -60)
+    .attr("rx", 16)
+    .attr("ry", 16)
+    .attr("fill", (d: any) => {
+      const baseColor = d.color || 'rgba(200, 200, 200, 0.45)';
+      return baseColor.replace(/[\d.]+\)$/, d.id === "portico" ? '0.7)' : '0.55)');
+    })
     .attr("class", (d: any) => d.id === "portico" ? "portico-node" : "cluster-node")
-    .attr("stroke", "rgba(255, 255, 255, 0.8)")
-    .attr("stroke-width", (d: any) => d.id === "portico" ? 2 : 1);
+    .attr("stroke", "rgba(255, 255, 255, 0.9)")
+    .attr("stroke-width", (d: any) => d.id === "portico" ? 2 : 1.5);
   
   // Add cluster labels
   node.filter((d: any) => d.type === 'cluster')
@@ -72,24 +80,27 @@ export function initializeNetworkGraph(
     .attr("font-weight", (d: any) => d.id === "portico" ? "700" : "600")
     .attr("font-size", (d: any) => d.id === "portico" ? "16px" : "14px");
   
-  // Add contact nodes (rectangles)
+  // Add contact nodes (rectangles with glassmorphism)
   node.filter((d: any) => d.type === 'contact')
     .append("rect")
     .attr("width", 170)
-    .attr("height", 100)
+    .attr("height", 110)
     .attr("x", -85)
-    .attr("y", -50)
-    .attr("rx", 24)
-    .attr("ry", 24)
+    .attr("y", -55)
+    .attr("rx", 16)
+    .attr("ry", 16)
     .attr("fill", (d: any) => {
       const clusterNode = nodes.find(n => 
         n.type === 'cluster' && n.id === String(d.clusterId)
       );
-      return clusterNode?.color || 'rgba(200, 200, 200, 0.45)';
+      const baseColor = clusterNode?.color || 'rgba(200, 200, 200, 0.45)';
+      
+      // Create a slightly lighter version of the cluster color
+      return baseColor.replace(/[\d.]+\)$/, '0.65)');
     })
     .attr("class", "contact-node")
-    .attr("stroke", "rgba(255, 255, 255, 0.8)")
-    .attr("stroke-width", 1);
+    .attr("stroke", "rgba(255, 255, 255, 0.9)")
+    .attr("stroke-width", 1.5);
   
   // Add contact name
   node.filter((d: any) => d.type === 'contact')
