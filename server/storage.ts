@@ -258,13 +258,13 @@ export class MemStorage implements IStorage {
       }))
     ];
     
-    // Map connections to links
-    const links: Link[] = connections.map(connection => ({
-      id: connection.id.toString(),
-      source: connection.sourceId,
-      target: connection.targetId,
-      sourceType: connection.sourceType as any,
-      targetType: connection.targetType as any
+    // Connect contacts to their respective clusters
+    const contactClusterLinks: Link[] = contacts.map(contact => ({
+      id: `contact-cluster-${contact.id}`,
+      source: contact.clusterId.toString(),
+      target: contact.id.toString(),
+      sourceType: "cluster",
+      targetType: "contact"
     }));
     
     // Create links from Portico to each cluster
@@ -278,7 +278,7 @@ export class MemStorage implements IStorage {
     
     return { 
       nodes, 
-      links: [...links, ...porticoLinks]
+      links: [...contactClusterLinks, ...porticoLinks]
     };
   }
 }

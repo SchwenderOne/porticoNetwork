@@ -34,11 +34,13 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({
       if (node.id === "portico") return true;
       
       if (node.type === 'cluster') {
-        // Keep clusters that are in the filtered list, and Portico
-        return filteredClusters.includes(parseInt(node.id));
+        // For clusters, check if they're in the filtered list
+        const clusterId = parseInt(node.id);
+        return !isNaN(clusterId) && filteredClusters.includes(clusterId);
       } else if (node.type === 'contact') {
         // For contacts, check cluster filter and search term
-        const matchesCluster = filteredClusters.includes(node.clusterId || 0);
+        const clusterIdNum = node.clusterId || 0;
+        const matchesCluster = filteredClusters.includes(clusterIdNum);
         if (!matchesCluster) return false;
         
         if (!searchTerm) return true;
@@ -54,8 +56,11 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({
     
     // Then filter links based on the filtered nodes
     const filteredLinks = data.links.filter((link) => {
-      const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
-      const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+      // Handle both string IDs and object references
+      const sourceId = typeof link.source === 'string' ? link.source : 
+                      (link.source as any)?.id || '';
+      const targetId = typeof link.target === 'string' ? link.target : 
+                      (link.target as any)?.id || '';
       
       const sourceExists = filteredNodes.some(n => n.id === sourceId);
       const targetExists = filteredNodes.some(n => n.id === targetId);

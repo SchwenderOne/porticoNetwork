@@ -19,6 +19,20 @@ export function initializeNetworkGraph(
   let nodes = [...data.nodes];
   let links = [...data.links];
   
+  // Restore saved node positions from localStorage if available
+  try {
+    const savedPositions = JSON.parse(localStorage.getItem('nodePositions') || '{}');
+    nodes.forEach(node => {
+      if (savedPositions[node.id]) {
+        // Apply saved positions as fixed coordinates
+        node.fx = savedPositions[node.id].x;
+        node.fy = savedPositions[node.id].y;
+      }
+    });
+  } catch (e) {
+    console.error('Failed to restore node positions:', e);
+  }
+  
   // Create simulation with basic forces
   const simulation = d3.forceSimulation()
     .nodes(nodes as any)
@@ -29,14 +43,28 @@ export function initializeNetworkGraph(
       d.id === "portico" ? 100 : (d.type === 'cluster' ? 70 : 85)
     ));
   
-  // Create links
+  // Create links with different styles based on connection type
   const link = svg.append("g")
     .attr("class", "links")
     .selectAll("line")
     .data(links)
     .enter().append("line")
-    .attr("stroke", "rgba(150, 150, 150, 0.3)")
-    .attr("stroke-width", 1.5);
+    .attr("stroke", (d: any) => {
+      // Different styles for different connection types
+      if (d.source === "portico" || d.target === "portico") {
+        return "rgba(120, 120, 180, 0.4)"; // Bluish for Portico connections
+      } else if (d.sourceType === "cluster" && d.targetType === "contact") {
+        return "rgba(100, 160, 100, 0.4)"; // Greenish for cluster-contact connections
+      }
+      return "rgba(150, 150, 150, 0.3)"; // Default color
+    })
+    .attr("stroke-width", (d: any) => {
+      return d.source === "portico" || d.target === "portico" ? 2 : 1.5;
+    })
+    .attr("stroke-dasharray", (d: any) => {
+      // Dashed line for Portico connections, solid for others
+      return d.source === "portico" || d.target === "portico" ? "5,3" : null;
+    });
   
   // Create nodes groups
   const node = svg.append("g")
@@ -160,10 +188,19 @@ export function initializeNetworkGraph(
   
   function dragended(event: any, d: any) {
     if (!event.active) simulation.alphaTarget(0);
-    // Keep Portico node pinned to center
-    if (d.id !== "portico") {
-      d.fx = null;
-      d.fy = null;
+    
+    // Save node position permanently by keeping the fixed coordinates
+    // This makes the drag position persistent
+    d.fx = d.x;
+    d.fy = d.y;
+    
+    // Create or update the node position in localStorage
+    try {
+      const savedPositions = JSON.parse(localStorage.getItem('nodePositions') || '{}');
+      savedPositions[d.id] = { x: d.x, y: d.y };
+      localStorage.setItem('nodePositions', JSON.stringify(savedPositions));
+    } catch (e) {
+      console.error('Failed to save node position:', e);
     }
   }
   
