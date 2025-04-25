@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { NetworkData, Node } from '@shared/schema';
 import { Loader2, Plus } from 'lucide-react';
 import { initializeNetworkGraph } from '@/lib/d3-utils';
@@ -24,52 +24,72 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [showSearchingMessage, setShowSearchingMessage] = useState(false);
   
+  // Use useMemo to compute filtered data
+  const filteredData = useMemo(() => {
+    if (!data) return { nodes: [], links: [] };
+    
+    // First filter the nodes
+    const filteredNodes = data.nodes.filter((node) => {
+      // Always include Portico node
+      if (node.id === "portico") return true;
+      
+      if (node.type === 'cluster') {
+        // Keep clusters that are in the filtered list, and Portico
+        return filteredClusters.includes(parseInt(node.id));
+      } else if (node.type === 'contact') {
+        // For contacts, check cluster filter and search term
+        const matchesCluster = filteredClusters.includes(node.clusterId || 0);
+        if (!matchesCluster) return false;
+        
+        if (!searchTerm) return true;
+        
+        const searchLower = searchTerm.toLowerCase();
+        return (
+          node.name.toLowerCase().includes(searchLower) ||
+          (node.role && node.role.toLowerCase().includes(searchLower))
+        );
+      }
+      return false;
+    });
+    
+    // Then filter links based on the filtered nodes
+    const filteredLinks = data.links.filter((link) => {
+      const sourceId = typeof link.source === 'string' ? link.source : link.source.id;
+      const targetId = typeof link.target === 'string' ? link.target : link.target.id;
+      
+      const sourceExists = filteredNodes.some(n => n.id === sourceId);
+      const targetExists = filteredNodes.some(n => n.id === targetId);
+      
+      return sourceExists && targetExists;
+    });
+    
+    return { nodes: filteredNodes, links: filteredLinks };
+  }, [data, filteredClusters, searchTerm]);
+  
+  // Check for empty results
+  useEffect(() => {
+    if (data && searchTerm) {
+      setShowSearchingMessage(searchTerm.length > 0 && filteredData.nodes.length <= 1); // 1 for Portico
+    } else {
+      setShowSearchingMessage(false);
+    }
+  }, [filteredData, searchTerm, data]);
+  
+  // Initialize the graph
   useEffect(() => {
     if (!data || isLoading || !svgRef.current || !containerRef.current) {
       return;
     }
 
-    // Filter data based on filtered clusters and search term
-    const filteredData = {
-      nodes: data.nodes.filter((node) => {
-        if (node.type === 'cluster') {
-          // For clusters, just check if they're in the filtered list
-          return filteredClusters.includes(parseInt(node.id));
-        } else if (node.type === 'contact') {
-          // For contacts, check if their cluster is filtered and if they match the search term
-          const matchesCluster = filteredClusters.includes(node.clusterId || 0);
-          
-          if (!matchesCluster) return false;
-          
-          if (!searchTerm) return true;
-          
-          const searchLower = searchTerm.toLowerCase();
-          return (
-            node.name.toLowerCase().includes(searchLower) ||
-            (node.role && node.role.toLowerCase().includes(searchLower))
-          );
-        }
-        return true;
-      }),
-      links: data.links.filter((link) => {
-        // Only keep links where both source and target nodes exist in the filtered nodes
-        const sourceExists = filteredData.nodes.some(n => n.id === link.source);
-        const targetExists = filteredData.nodes.some(n => n.id === link.target);
-        return sourceExists && targetExists;
-      }),
-    };
-
-    setShowSearchingMessage(searchTerm.length > 0 && filteredData.nodes.length === 0);
-
     // Initialize the graph with filtered data
     const cleanup = initializeNetworkGraph(
       svgRef.current,
-      filteredData,
+      filteredData as NetworkData,
       onNodeClick
     );
 
     return cleanup;
-  }, [data, isLoading, filteredClusters, searchTerm, onNodeClick]);
+  }, [filteredData, isLoading, onNodeClick, data]);
 
   return (
     <div className="glass rounded-xl p-4 mb-6 h-[600px] overflow-hidden relative" ref={containerRef}>

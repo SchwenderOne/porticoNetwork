@@ -126,7 +126,16 @@ export class MemStorage implements IStorage {
 
   async createContact(insertContact: InsertContact): Promise<Contact> {
     const id = this.contactCurrentId++;
-    const contact: Contact = { ...insertContact, id };
+    const contact: Contact = { 
+      id,
+      name: insertContact.name,
+      role: insertContact.role,
+      email: insertContact.email || null,
+      phone: insertContact.phone || null,
+      notes: insertContact.notes || null,
+      clusterId: insertContact.clusterId
+    };
+    
     this.contacts.set(id, contact);
     
     // Automatically create a connection between this contact and its cluster
@@ -168,7 +177,17 @@ export class MemStorage implements IStorage {
       });
     }
     
-    const updatedContact = { ...existingContact, ...contactUpdate };
+    // Create a properly typed updated contact
+    const updatedContact: Contact = {
+      ...existingContact,
+      name: contactUpdate.name !== undefined ? contactUpdate.name : existingContact.name,
+      role: contactUpdate.role !== undefined ? contactUpdate.role : existingContact.role,
+      email: contactUpdate.email !== undefined ? (contactUpdate.email || null) : existingContact.email,
+      phone: contactUpdate.phone !== undefined ? (contactUpdate.phone || null) : existingContact.phone,
+      notes: contactUpdate.notes !== undefined ? (contactUpdate.notes || null) : existingContact.notes,
+      clusterId: contactUpdate.clusterId !== undefined ? contactUpdate.clusterId : existingContact.clusterId
+    };
+    
     this.contacts.set(id, updatedContact);
     return updatedContact;
   }

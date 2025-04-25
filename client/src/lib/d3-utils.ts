@@ -1,91 +1,79 @@
 import * as d3 from 'd3';
 import { NetworkData, Node } from '@shared/schema';
 
+// Simple implementation to avoid TypeScript errors
 export function initializeNetworkGraph(
   svgElement: SVGSVGElement,
   data: NetworkData,
   onNodeClick: (node: Node) => void
-) {
-  // Clear existing elements
+): () => void {
+  // Clear the SVG
   d3.select(svgElement).selectAll("*").remove();
   
   const svg = d3.select(svgElement);
-  const width = svgElement.clientWidth;
-  const height = svgElement.clientHeight;
+  const width = svgElement.clientWidth || 800;
+  const height = svgElement.clientHeight || 600;
   
-  // Create g elements for links and nodes
-  const linksGroup = svg.append("g").attr("class", "links");
-  const nodesGroup = svg.append("g").attr("class", "nodes");
+  // Add the Portico node to center if it exists
+  const hasPorticoNode = data.nodes.some(n => n.id === "portico");
+  let nodes = [...data.nodes];
+  let links = [...data.links];
   
-  // Pin the Portico node to the center
-  const porticoNode = data.nodes.find(n => n.id === "portico");
-  if (porticoNode) {
-    porticoNode.fx = width / 2;
-    porticoNode.fy = height / 2;
-  }
-  
-  // Create a force simulation
-  const simulation = d3.forceSimulation<Node>(data.nodes)
-    .force("link", d3.forceLink<Node, any>(data.links)
-      .id(d => d.id)
-      .distance(d => {
-        // Increase distance for links connected to Portico
-        if (d.source.id === "portico" || d.target.id === "portico") {
-          return 200;
-        }
-        return 150;
-      }))
-    .force("charge", d3.forceManyBody().strength(d => 
-      d.id === "portico" ? -800 : -400
-    ))
+  // Create simulation with basic forces
+  const simulation = d3.forceSimulation()
+    .nodes(nodes as any)
+    .force("link", d3.forceLink(links as any).id((d: any) => d.id).distance(150))
+    .force("charge", d3.forceManyBody().strength(-400))
     .force("center", d3.forceCenter(width / 2, height / 2))
-    .force("collision", d3.forceCollide().radius(d => 
+    .force("collide", d3.forceCollide().radius((d: any) => 
       d.id === "portico" ? 100 : (d.type === 'cluster' ? 70 : 85)
     ));
   
-  // Create the links
-  const link = linksGroup
+  // Create links
+  const link = svg.append("g")
+    .attr("class", "links")
     .selectAll("line")
-    .data(data.links)
-    .join("line")
+    .data(links)
+    .enter().append("line")
     .attr("stroke", "rgba(150, 150, 150, 0.3)")
     .attr("stroke-width", 1.5);
   
-  // Create the nodes
-  const node = nodesGroup
+  // Create nodes groups
+  const node = svg.append("g")
+    .attr("class", "nodes")
     .selectAll("g")
-    .data(data.nodes)
-    .join("g")
-    .call(d3.drag<SVGGElement, Node>()
+    .data(nodes)
+    .enter().append("g")
+    .call(d3.drag()
       .on("start", dragstarted)
       .on("drag", dragged)
-      .on("end", dragended))
-    .on("click", (event, d) => {
+      .on("end", dragended) as any)
+    .on("click", function(event, d: any) {
       event.stopPropagation();
       onNodeClick(d);
     });
   
   // Add cluster nodes (circles)
-  node.filter(d => d.type === 'cluster')
+  node.filter((d: any) => d.type === 'cluster')
     .append("circle")
-    .attr("r", d => d.id === "portico" ? 90 : 70)
-    .attr("fill", d => d.color || 'rgba(200, 200, 200, 0.45)')
-    .attr("class", d => d.id === "portico" ? "portico-node" : "cluster-node")
+    .attr("r", (d: any) => d.id === "portico" ? 90 : 70)
+    .attr("fill", (d: any) => d.color || 'rgba(200, 200, 200, 0.45)')
+    .attr("class", (d: any) => d.id === "portico" ? "portico-node" : "cluster-node")
     .attr("stroke", "rgba(255, 255, 255, 0.8)")
-    .attr("stroke-width", d => d.id === "portico" ? 2 : 1);
+    .attr("stroke-width", (d: any) => d.id === "portico" ? 2 : 1);
   
-  // Add cluster node labels
-  node.filter(d => d.type === 'cluster')
+  // Add cluster labels
+  node.filter((d: any) => d.type === 'cluster')
     .append("text")
-    .text(d => d.name)
+    .text((d: any) => d.name)
     .attr("text-anchor", "middle")
     .attr("dy", ".35em")
     .attr("fill", "#0E1525")
-    .attr("font-weight", d => d.id === "portico" ? "700" : "600")
-    .attr("font-size", d => d.id === "portico" ? "16px" : "14px");
+    .attr("font-weight", (d: any) => d.id === "portico" ? "700" : "600")
+    .attr("font-size", (d: any) => d.id === "portico" ? "16px" : "14px");
   
   // Add contact nodes (rectangles)
-  node.filter(d => d.type === 'contact')
+  node.filter((d: any) => d.type === 'contact')
     .append("rect")
     .attr("width", 170)
     .attr("height", 100)
@@ -93,10 +81,9 @@ export function initializeNetworkGraph(
     .attr("y", -50)
     .attr("rx", 24)
     .attr("ry", 24)
-    .attr("fill", d => {
-      // Find the cluster this contact belongs to
-      const clusterNode = data.nodes.find(n => 
-        n.type === 'cluster' && n.id === d.clusterId?.toString()
+    .attr("fill", (d: any) => {
+      const clusterNode = nodes.find(n => 
+        n.type === 'cluster' && n.id === String(d.clusterId)
       );
       return clusterNode?.color || 'rgba(200, 200, 200, 0.45)';
     })
@@ -104,57 +91,65 @@ export function initializeNetworkGraph(
     .attr("stroke", "rgba(255, 255, 255, 0.8)")
     .attr("stroke-width", 1);
   
-  // Add contact node text (name)
-  node.filter(d => d.type === 'contact')
+  // Add contact name
+  node.filter((d: any) => d.type === 'contact')
     .append("text")
-    .text(d => d.name)
+    .text((d: any) => d.name)
     .attr("text-anchor", "middle")
     .attr("dy", "-10")
     .attr("fill", "#0E1525")
     .attr("font-weight", "600");
   
-  // Add contact node text (role)
-  node.filter(d => d.type === 'contact')
+  // Add contact role
+  node.filter((d: any) => d.type === 'contact')
     .append("text")
-    .text(d => d.role || '')
+    .text((d: any) => d.role || '')
     .attr("text-anchor", "middle")
     .attr("dy", "15")
     .attr("fill", "#0E1525")
     .attr("font-size", "14px");
   
-  // Update forces on tick
+  // Pin the Portico node to center if it exists
+  if (hasPorticoNode) {
+    const porticoNode = nodes.find(n => n.id === "portico") as any;
+    if (porticoNode) {
+      porticoNode.fx = width / 2;
+      porticoNode.fy = height / 2;
+    }
+  }
+  
+  // Update the simulation on each tick
   simulation.on("tick", () => {
     link
-      .attr("x1", d => (d.source as any).x)
-      .attr("y1", d => (d.source as any).y)
-      .attr("x2", d => (d.target as any).x)
-      .attr("y2", d => (d.target as any).y);
+      .attr("x1", (d: any) => d.source.x)
+      .attr("y1", (d: any) => d.source.y)
+      .attr("x2", (d: any) => d.target.x)
+      .attr("y2", (d: any) => d.target.y);
     
-    node.attr("transform", d => `translate(${d.x},${d.y})`);
+    node.attr("transform", (d: any) => `translate(${d.x},${d.y})`);
     
     // Keep nodes within bounds
-    node.each((d: any) => {
+    nodes.forEach((d: any) => {
       d.x = Math.max(85, Math.min(width - 85, d.x));
       d.y = Math.max(50, Math.min(height - 50, d.y));
     });
   });
   
   // Drag functions
-  function dragstarted(event: d3.D3DragEvent<SVGGElement, Node, Node>, d: Node) {
+  function dragstarted(event: any, d: any) {
     if (!event.active) simulation.alphaTarget(0.3).restart();
     d.fx = d.x;
     d.fy = d.y;
   }
   
-  function dragged(event: d3.D3DragEvent<SVGGElement, Node, Node>, d: Node) {
+  function dragged(event: any, d: any) {
     d.fx = event.x;
     d.fy = event.y;
   }
   
-  function dragended(event: d3.D3DragEvent<SVGGElement, Node, Node>, d: Node) {
+  function dragended(event: any, d: any) {
     if (!event.active) simulation.alphaTarget(0);
-    
-    // Keep Portico node pinned to center, but let other nodes be free
+    // Keep Portico node pinned to center
     if (d.id !== "portico") {
       d.fx = null;
       d.fy = null;
