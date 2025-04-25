@@ -1,15 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
-import { NetworkData, Node, Link } from '@shared/schema';
+import { NetworkData, Node as NetworkNode, Link } from '@shared/schema';
 import * as d3 from 'd3';
 
 interface UseNetworkGraphProps {
   data: NetworkData | undefined;
-  onNodeClick: (node: Node) => void;
+  onNodeClick: (node: NetworkNode) => void;
 }
 
 export function useNetworkGraph({ data, onNodeClick }: UseNetworkGraphProps) {
   const svgRef = useRef<SVGSVGElement>(null);
-  const simulationRef = useRef<d3.Simulation<Node, undefined> | null>(null);
+  const simulationRef = useRef<d3.Simulation<NetworkNode, undefined> | null>(null);
   
   // State for tracking active filters
   const [activeClusterFilters, setActiveClusterFilters] = useState<number[]>([]);

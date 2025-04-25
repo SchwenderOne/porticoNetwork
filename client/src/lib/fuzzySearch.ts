@@ -1,10 +1,10 @@
 import Fuse from 'fuse.js';
-import { Node } from '@shared/schema';
+import { Node as NetworkNode } from '@shared/schema';
 
 /**
  * Performs a fuzzy search on network nodes based on name or role
  */
-export function fuzzySearch(nodes: Node[], searchTerm: string): Node[] {
+export function fuzzySearch(nodes: NetworkNode[], searchTerm: string): NetworkNode[] {
   if (!searchTerm.trim()) {
     return nodes;
   }
