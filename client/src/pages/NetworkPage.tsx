@@ -34,8 +34,8 @@ const NetworkPage: React.FC = () => {
   } = useQuery<NetworkData>({
     queryKey: ['/api/network'],
     placeholderData: { nodes: [], links: [] }, // Prevent 'undefined' errors
-    refetchInterval: 2000, // Automatische Aktualisierung alle 2 Sekunden
-    staleTime: 1000, // Daten werden nach 1 Sekunde als veraltet markiert
+    refetchInterval: 10000, // Aktualisierung nur alle 10 Sekunden statt alle 2 Sekunden
+    staleTime: 8000, // Daten werden erst nach 8 Sekunden als veraltet markiert
   });
   
   // Fetch clusters mit ähnlichen Einstellungen
@@ -45,8 +45,8 @@ const NetworkPage: React.FC = () => {
   } = useQuery<Cluster[]>({
     queryKey: ['/api/clusters'],
     placeholderData: [], // Prevent 'undefined' errors
-    refetchInterval: 2000, // Automatische Aktualisierung alle 2 Sekunden
-    staleTime: 1000, // Daten werden nach 1 Sekunde als veraltet markiert
+    refetchInterval: 10000, // Aktualisierung nur alle 10 Sekunden statt alle 2 Sekunden
+    staleTime: 8000, // Daten werden erst nach 8 Sekunden als veraltet markiert
   });
   
   // Protokolliere Aktualisierungen für Debugging
@@ -113,6 +113,9 @@ const NetworkPage: React.FC = () => {
     setIsAddContactModalOpen(false);
     setIsAddClusterModalOpen(false);
     setIsEditMode(false);
+    
+    // Zurücksetzen des Session-Flags, damit eine neue Zoom-Berechnung erfolgt
+    sessionStorage.removeItem('initialZoomPerformed');
     
     // Zuerst die Cluster aktualisieren
     refetchClusters().then(() => {

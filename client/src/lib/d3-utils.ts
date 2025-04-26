@@ -309,33 +309,39 @@ export function initializeNetworkGraph(
     );
   };
   
-  // Vorherige Zoomstufe und Position wiederherstellen, falls vorhanden
-  if (savedTransform) {
-    try {
-      const transform = JSON.parse(savedTransform);
-      // Zeitverzögert anwenden, damit die Simulation Zeit hat, Knoten zu positionieren
-      setTimeout(() => {
-        svg.call(
+  // Wir verwenden einen einfacheren Ansatz zur Vermeidung des häufigen Zoomens
+  // Ein Flag im localStorage gibt an, ob wir beim ersten Laden einen initialen Zoom durchführen sollen
+  const initialZoomPerformedString = sessionStorage.getItem('initialZoomPerformed');
+  const initialZoomPerformed = initialZoomPerformedString === 'true';
+  
+  // Nur beim ersten Laden die Zoom-Transformation anwenden
+  if (!initialZoomPerformed) {
+    // Flag setzen, damit wir nur einmal zoomen
+    sessionStorage.setItem('initialZoomPerformed', 'true');
+    
+    if (savedTransform) {
+      try {
+        const transform = JSON.parse(savedTransform);
+        // Direkte Anwendung ohne setTimeout, um Timing-Probleme zu vermeiden
+        // Explizite Transition mit dem transform verwenden
+        svg.transition().duration(200).call(
           zoom.transform as any,
           d3.zoomIdentity
             .translate(transform.x, transform.y)
             .scale(transform.k)
         );
-        console.log("Zoom-Transformation wiederhergestellt:", transform);
-      }, 100);
-    } catch (e) {
-      console.error('Failed to restore zoom transform:', e);
-    }
-  } else {
-    // Wenn keine gespeicherte Transformation vorhanden ist, 
-    // nach einer kurzen Verzögerung automatisch an die Netzwerkgröße anpassen
-    setTimeout(() => {
-      // Automatische Anfangsanpassung des Zooms
-      const nodeElements = graphContainer.selectAll(".nodes g");
-      if (nodeElements.size() > 0) {
+        console.log("Zoom-Transformation beim Start wiederhergestellt");
+      } catch (e) {
+        console.error('Failed to restore zoom transform:', e);
+        // Bei Fehler den Fit-to-View als Fallback verwenden
         fitToViewHelper();
       }
-    }, 300);
+    } else {
+      // Wenn keine gespeicherte Transformation vorhanden ist, an die Netzwerkgröße anpassen
+      setTimeout(() => {
+        fitToViewHelper();
+      }, 300);
+    }
   }
   
   // Add zoom controls - positioniert auf der linken Seite, um Überlappung zu vermeiden
@@ -447,7 +453,12 @@ export function initializeNetworkGraph(
   zoomControls.select("circle:nth-of-type(3)")
     .on("click", (event) => {
       event.stopPropagation(); // Verhindert, dass das Event weitergeleitet wird
-      fitToViewHelper(); // Verwende die bereits definierte Hilfsfunktion
+      
+      // Beim Klick auf "Fit to View" setzen wir den gespeicherten Zoom-Status zurück
+      localStorage.removeItem('networkZoomTransform');
+      
+      // Verwende die Hilfsfunktion, um die Ansicht anzupassen
+      fitToViewHelper(); 
     });
   
   // Return cleanup function
