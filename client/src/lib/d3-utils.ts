@@ -1,7 +1,7 @@
 import * as d3 from 'd3';
 import { NetworkData, Node as NetworkNode } from '@shared/schema';
 
-// Simple implementation to avoid TypeScript errors
+// Implementation with zoom functionality
 export function initializeNetworkGraph(
   svgElement: SVGSVGElement,
   data: NetworkData,
@@ -13,6 +13,10 @@ export function initializeNetworkGraph(
   const svg = d3.select(svgElement);
   const width = svgElement.clientWidth || 800;
   const height = svgElement.clientHeight || 600;
+  
+  // Create main container for graph that will be zoomed
+  const graphContainer = svg.append("g")
+    .attr("class", "graph-container");
   
   // Add the Portico node to center if it exists
   const hasPorticoNode = data.nodes.some(n => n.id === "portico");
@@ -33,24 +37,53 @@ export function initializeNetworkGraph(
     console.error('Failed to restore node positions:', e);
   }
   
-  // Create simulation with basic forces
+  // Center coordinates
+  const centerX = width / 2;
+  const centerY = height / 2;
+  
+  // Find and position the Portico node in the center
+  const porticoNode = nodes.find(n => n.id === "portico");
+  if (porticoNode) {
+    porticoNode.fx = centerX;
+    porticoNode.fy = centerY;
+  }
+  
+  // Position new clusters around the Portico node if they don't have a fixed position
+  const clusterNodes = nodes.filter(n => n.type === 'cluster' && n.id !== 'portico');
+  const totalClusters = clusterNodes.length;
+  
+  if (totalClusters > 0) {
+    const radius = 250; // Distance from center
+    
+    clusterNodes.forEach((node, index) => {
+      // If no saved position exists, set a fixed position in a circle
+      if (!node.fx && !node.fy) {
+        const angle = (index / totalClusters) * 2 * Math.PI;
+        node.fx = centerX + radius * Math.cos(angle);
+        node.fy = centerY + radius * Math.sin(angle);
+      }
+    });
+  }
+  
+  // Create simulation with forces - applying different strengths to different node types
   const simulation = d3.forceSimulation()
     .nodes(nodes as any)
     .force("link", d3.forceLink(links as any).id((d: any) => d.id).distance(150))
-    .force("charge", d3.forceManyBody().strength(-400))
+    .force("charge", d3.forceManyBody().strength((d: any) => 
+      d.type === 'contact' ? -400 : -100 // Only contacts get strong repulsion
+    ))
     .force("center", d3.forceCenter(width / 2, height / 2))
     .force("collide", d3.forceCollide().radius((d: any) => 
-      d.id === "portico" ? 100 : (d.type === 'cluster' ? 70 : 85)
+      d.id === "portico" ? 120 : (d.type === 'cluster' ? 90 : 85)
     ));
   
-  // Create links with different styles based on connection type
-  const link = svg.append("g")
+  // Add links with styles based on connection type
+  const link = graphContainer.append("g")
     .attr("class", "links")
     .selectAll("line")
     .data(links)
     .enter().append("line")
     .attr("stroke", (d: any) => {
-      // Different styles for different connection types
       if (d.source === "portico" || d.target === "portico") {
         return "rgba(120, 120, 180, 0.4)"; // Bluish for Portico connections
       } else if (d.sourceType === "cluster" && d.targetType === "contact") {
@@ -62,12 +95,11 @@ export function initializeNetworkGraph(
       return d.source === "portico" || d.target === "portico" ? 2 : 1.5;
     })
     .attr("stroke-dasharray", (d: any) => {
-      // Dashed line for Portico connections, solid for others
       return d.source === "portico" || d.target === "portico" ? "5,3" : null;
     });
   
-  // Create nodes groups
-  const node = svg.append("g")
+  // Create node groups
+  const node = graphContainer.append("g")
     .attr("class", "nodes")
     .selectAll("g")
     .data(nodes)
@@ -118,8 +150,7 @@ export function initializeNetworkGraph(
     .attr("rx", 16)
     .attr("ry", 16)
     .attr("fill", (d: any) => {
-      // Suche den entsprechenden Cluster-Node
-      // Da Cluster jetzt im Format "cluster-X" sind, suchen wir nach "cluster-[clusterId]"
+      // Find the corresponding cluster node
       const clusterNode = nodes.find(n => 
         n.type === 'cluster' && 
         (n.id === `cluster-${d.clusterId}` || 
@@ -152,7 +183,7 @@ export function initializeNetworkGraph(
     .attr("fill", "#0E1525")
     .attr("font-size", "14px");
   
-  // Pin the Portico node to center if it exists
+  // Make sure Portico stays centered
   if (hasPorticoNode) {
     const porticoNode = nodes.find(n => n.id === "portico") as any;
     if (porticoNode) {
@@ -194,11 +225,10 @@ export function initializeNetworkGraph(
     if (!event.active) simulation.alphaTarget(0);
     
     // Save node position permanently by keeping the fixed coordinates
-    // This makes the drag position persistent
     d.fx = d.x;
     d.fy = d.y;
     
-    // Create or update the node position in localStorage
+    // Store position in localStorage
     try {
       const savedPositions = JSON.parse(localStorage.getItem('nodePositions') || '{}');
       savedPositions[d.id] = { x: d.x, y: d.y };
@@ -208,8 +238,70 @@ export function initializeNetworkGraph(
     }
   }
   
-  // Return a cleanup function
+  // Add zoom functionality
+  const zoom = d3.zoom()
+    .scaleExtent([0.3, 3]) // Min and max zoom scale
+    .on("zoom", (event) => {
+      // Transform the graph container based on zoom event
+      graphContainer.attr("transform", event.transform);
+    });
+  
+  // Enable zooming on the SVG element
+  svg.call(zoom as any);
+  
+  // Add zoom controls
+  const zoomControls = svg.append("g")
+    .attr("class", "zoom-controls")
+    .attr("transform", `translate(${width - 70}, ${height - 100})`);
+  
+  // Zoom-In Button
+  zoomControls.append("circle")
+    .attr("cx", 25)
+    .attr("cy", 25)
+    .attr("r", 20)
+    .attr("fill", "rgba(255, 255, 255, 0.8)")
+    .attr("stroke", "#ccc");
+  
+  zoomControls.append("text")
+    .attr("x", 25)
+    .attr("y", 30)
+    .attr("text-anchor", "middle")
+    .attr("font-size", "20px")
+    .attr("fill", "#333")
+    .text("+")
+    .style("pointer-events", "none");
+  
+  // Zoom-Out Button
+  zoomControls.append("circle")
+    .attr("cx", 25)
+    .attr("cy", 75)
+    .attr("r", 20)
+    .attr("fill", "rgba(255, 255, 255, 0.8)")
+    .attr("stroke", "#ccc");
+  
+  zoomControls.append("text")
+    .attr("x", 25)
+    .attr("y", 80)
+    .attr("text-anchor", "middle")
+    .attr("font-size", "24px")
+    .attr("fill", "#333")
+    .text("−")
+    .style("pointer-events", "none");
+  
+  // Event listeners for zoom buttons
+  zoomControls.select("circle:first-of-type")
+    .on("click", () => {
+      svg.transition().duration(300).call(zoom.scaleBy as any, 1.3);
+    });
+  
+  zoomControls.select("circle:last-of-type")
+    .on("click", () => {
+      svg.transition().duration(300).call(zoom.scaleBy as any, 0.7);
+    });
+  
+  // Return cleanup function
   return () => {
     simulation.stop();
+    svg.on(".zoom", null);
   };
 }
