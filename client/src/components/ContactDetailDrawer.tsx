@@ -36,9 +36,16 @@ const ContactDetailDrawer: React.FC<ContactDetailDrawerProps> = ({
   const relatedContacts = relatedContactsQuery.data as Contact[] || [];
   
   // Filter out the current contact
-  const filteredRelatedContacts = relatedContacts.filter(
-    c => c.id.toString() !== contact?.id
-  ).slice(0, 5); // Show max 5 related contacts
+  const filteredRelatedContacts = relatedContacts.filter(c => {
+    // Extrahiere die ID aus dem contact.id, falls es sich um ein "contact-X" Format handelt
+    const currentContactId = contact?.originalId !== undefined 
+      ? contact.originalId 
+      : (contact?.id.startsWith('contact-') 
+          ? parseInt(contact.id.replace('contact-', '')) 
+          : contact?.id);
+    
+    return c.id.toString() !== currentContactId?.toString();
+  }).slice(0, 5); // Show max 5 related contacts
 
   const getClusterName = (clusterId?: number) => {
     if (!clusterId) return '';

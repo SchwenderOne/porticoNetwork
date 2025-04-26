@@ -79,8 +79,13 @@ const AddContactModal: React.FC<AddContactModalProps> = ({
   const onSubmit = async (data: FormValues) => {
     try {
       if (isEdit && contact) {
+        // Verwende originalId, wenn vorhanden, sonst extrahiere ID aus dem ID-String
+        const contactId = contact.originalId !== undefined 
+          ? contact.originalId 
+          : parseInt(contact.id.replace('contact-', ''));
+          
         // Update existing contact
-        await apiRequest('PATCH', `/api/contacts/${contact.id}`, data);
+        await apiRequest('PATCH', `/api/contacts/${contactId}`, data);
       } else {
         // Create new contact
         await apiRequest('POST', '/api/contacts', data);
