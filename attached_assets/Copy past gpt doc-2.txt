@@ -1,0 +1,135 @@
+﻿# Projektname
+
+
+Kurzer, prägnanter Titel deiner Webseite
+
+
+---
+
+
+## 1. Projektübersicht
+
+
+- **Zweck / Ziel**  
+  Eine kurze Beschreibung: Was macht die Seite? Für wen ist sie gedacht? (z. B. „Landing­page für …“, „Single-Page-App zur …“)
+
+
+- **Funktionalitäten**  
+  Stichpunktartig: Login, Kalender, Chat, To-Do-Liste etc.
+
+
+---
+
+
+## 2. Tech-Stack & Dependencies
+
+
+- **Frameworks / Libraries**  
+  z. B. React (v17.0.2), TailwindCSS (v3.2), Node.js (v18.x), Express, etc.  
+- **Package-Manager**  
+  npm / yarn / pnpm  
+- **Weitere Tools**  
+  z. B. Replit-CLI, Vercel-CLI, Browser-Sync
+
+
+---
+
+
+## 3. Projektstruktur
+
+
+Baumansicht mit kurzen Erklärungen, z. B.:
+
+## Projektstruktur
+
+
+/
+├── public/             # statische Assets (HTML, Bilder, Icons)  
+│   └── index.html  
+├── src/                # Quellcode  
+│   ├── components/     # wiederverwendbare React-Komponenten  
+│   ├── pages/          # Seiten-Routen  
+│   ├── styles/         # CSS / Tailwind-Konfiguration  
+│   └── index.js        # App-Einstiegspunkt  
+├── .replit             # Replit Run/Build-Settings  
+├── package.json        # Skripte & Abhängigkeiten  
+└── README.md           # Projekt-Beschreibung und Anleitungen  
+
+
+
+
+
+
+---
+
+
+## 4. Installation & Setup
+
+
+Schritt-für-Schritt-Anleitung, z. B.:
+
+
+1. Replit-Projekt forken oder klonen  
+2. (Optional) `.env.example` → `.env` kopieren und Variablen ausfüllen  
+3. `npm install` oder `yarn install`  
+4. `npm run dev` startet lokalen Dev-Server auf `localhost:3000`  
+
+
+---
+
+
+## 5. Laufende Skripte
+
+
+| Befehl               | Beschreibung                                |
+|----------------------|---------------------------------------------|
+| `npm run dev`        | Development-Server mit Hot-Reload           |
+| `npm run build`      | Produktions-Bundle im `dist/`-Ordner         |
+| `npm start`          | Lokaler Production-Server                   |
+| `npm run lint`       | Code-Qualität prüfen (ESLint, Prettier)      |
+
+
+---
+
+
+## 6. Umgebungsvariablen
+
+
+Liste aller `.env`-Keys:
+
+
+```env
+REACT_APP_API_URL=        # Basis-URL deiner API
+REPLIT_DB_URL=           # falls du Replit-DB nutzt
+NEXT_PUBLIC_ANALYTICS=   # Google Analytics ID o.Ä.
+
+
+7. Stil- und Namenskonventionen
+* CSS-Klassen: BEM / Tailwind-Utility
+* Komponenten-Namensgebung: PascalCase
+* Dateistruktur: Jeden Unterordner nach Feature gruppieren
+________________
+
+
+8. Deployment
+Wie und wo du live stellst:
+* Vercel: Push auf main → automatische Deployments
+* Replit: Run-Button in der Sidebar
+* Netlify: Build-Hook …
+________________
+
+
+9. Bekannte Probleme & To-Dos
+* Issue #12: Mobile Menü funktioniert noch nicht
+* TODO: Dark Mode umsetzen
+________________
+
+
+10. Mitwirken (optional)
+* Fork → Branch → PR
+* Code-Review-Prozess, Tests, CI/CD
+________________
+
+
+11. Lizenz
+Unter welcher Lizenz läuft dein Code? z. B. MIT, Apache 2.0, etc.
