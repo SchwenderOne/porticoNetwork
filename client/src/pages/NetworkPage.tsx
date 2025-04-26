@@ -26,22 +26,53 @@ const NetworkPage: React.FC = () => {
   const [isFabOpen, setIsFabOpen] = useState(false);
   
   // Fetch network data
-  const { data: networkData, isLoading, refetch: refetchNetwork } = useQuery<NetworkData>({
+  const { 
+    data: networkData, 
+    isLoading, 
+    refetch: refetchNetwork,
+    dataUpdatedAt // Zeitstempel der letzten Datenaktualisierung 
+  } = useQuery<NetworkData>({
     queryKey: ['/api/network'],
+    placeholderData: { nodes: [], links: [] }, // Prevent 'undefined' errors
+    refetchInterval: 2000, // Automatische Aktualisierung alle 2 Sekunden
+    staleTime: 1000, // Daten werden nach 1 Sekunde als veraltet markiert
   });
   
-  // Fetch clusters for filters and add form
-  const { data: clusters } = useQuery<Cluster[]>({
+  // Fetch clusters mit ähnlichen Einstellungen
+  const { 
+    data: clusters, 
+    refetch: refetchClusters 
+  } = useQuery<Cluster[]>({
     queryKey: ['/api/clusters'],
     placeholderData: [], // Prevent 'undefined' errors
+    refetchInterval: 2000, // Automatische Aktualisierung alle 2 Sekunden
+    staleTime: 1000, // Daten werden nach 1 Sekunde als veraltet markiert
   });
+  
+  // Protokolliere Aktualisierungen für Debugging
+  useEffect(() => {
+    if (networkData) {
+      console.log(`Network data updated at ${new Date().toLocaleTimeString()}, nodes: ${networkData.nodes.length}`);
+    }
+  }, [networkData]);
 
   // Initialize active filters with all clusters when data is loaded
+  // Dieser Effect muss bei jeder Änderung der Clusters ausgeführt werden
   useEffect(() => {
-    if (clusters && activeFilters.length === 0) {
-      setActiveFilters(clusters.map((cluster: Cluster) => cluster.id));
+    if (clusters && clusters.length > 0) {
+      // Hole alle Cluster-IDs
+      const allClusterIds = clusters.map((cluster: Cluster) => cluster.id);
+      
+      // Prüfe, ob es neue Cluster gibt, die nicht in activeFilters sind
+      const newClusters = allClusterIds.filter(id => !activeFilters.includes(id));
+      
+      // Wenn es neue Cluster gibt, aktualisiere die Filter
+      if (newClusters.length > 0) {
+        console.log("Neue Cluster erkannt, aktualisiere Filter:", newClusters);
+        setActiveFilters([...activeFilters, ...newClusters]);
+      }
     }
-  }, [clusters, activeFilters.length]);
+  }, [clusters]); // Abhängigkeit nur von Clusters, damit der Effect bei jeder Änderung ausgeführt wird
 
   // Handle node click
   const handleNodeClick = (node: NetworkNode) => {
@@ -83,13 +114,22 @@ const NetworkPage: React.FC = () => {
     setIsAddClusterModalOpen(false);
     setIsEditMode(false);
     
-    // Force refresh of network data
-    refetchNetwork();
-    
-    // Force a short delay and then refresh again to ensure data is updated
-    setTimeout(() => {
-      refetchNetwork();
-    }, 500);
+    // Zuerst die Cluster aktualisieren
+    refetchClusters().then(() => {
+      console.log("Clusters neu geladen");
+      
+      // Dann das Netzwerk aktualisieren
+      return refetchNetwork();
+    }).then(() => {
+      console.log("Netzwerk neu geladen (1. Versuch)");
+      
+      // Ein zweiter Versuch nach kurzer Verzögerung, um sicherzustellen, 
+      // dass alle Änderungen berücksichtigt werden
+      setTimeout(() => {
+        refetchClusters().then(() => refetchNetwork())
+          .then(() => console.log("Netzwerk neu geladen (2. Versuch)"));
+      }, 1000);
+    });
   };
 
   // Handle edit button click
@@ -114,7 +154,12 @@ const NetworkPage: React.FC = () => {
         toggleFilter={toggleFilter}
       />
       
+      {/* 
+        Wir geben einen key an, damit React die Komponente komplett neu rendert,
+        wenn sich die Anzahl der Nodes ändert.
+      */}
       <GraphCanvas 
+        key={networkData ? `graph-canvas-${networkData.nodes.length}` : 'loading'}
         data={networkData as NetworkData}
         isLoading={isLoading}
         filteredClusters={activeFilters}
