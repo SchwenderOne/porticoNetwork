@@ -5,17 +5,25 @@ import HeroTitle from '@/components/HeroTitle';
 import FilterSection from '@/components/FilterSection';
 import GraphCanvas from '@/components/GraphCanvas';
 import AddContactModal from '@/components/AddContactModal';
+import AddClusterModal from '@/components/AddClusterModal';
 import ContactDetailDrawer from '@/components/ContactDetailDrawer';
 import { fuzzySearch } from '@/lib/fuzzySearch';
+import { 
+  UserPlus, 
+  FolderPlus,
+  X 
+} from 'lucide-react';
 
 const NetworkPage: React.FC = () => {
   // State for UI controls
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isAddContactModalOpen, setIsAddContactModalOpen] = useState(false);
+  const [isAddClusterModalOpen, setIsAddClusterModalOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [activeContact, setActiveContact] = useState<NetworkNode | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilters, setActiveFilters] = useState<number[]>([]);
+  const [isFabOpen, setIsFabOpen] = useState(false);
   
   // Fetch network data
   const { data: networkData, isLoading, refetch: refetchNetwork } = useQuery<NetworkData>({
@@ -52,16 +60,28 @@ const NetworkPage: React.FC = () => {
     }
   };
 
-  // Handle add button click
-  const handleAddClick = () => {
-    setIsAddModalOpen(true);
+  // Toggle FAB menu
+  const toggleFabMenu = () => {
+    setIsFabOpen(!isFabOpen);
+  };
+  
+  // Handle add contact button click
+  const handleAddContactClick = () => {
+    setIsAddContactModalOpen(true);
+    setIsFabOpen(false);
+  };
+  
+  // Handle add cluster button click
+  const handleAddClusterClick = () => {
+    setIsAddClusterModalOpen(true);
+    setIsFabOpen(false);
   };
 
   // Handle edit button click
   const handleEditClick = (contact: NetworkNode) => {
     setActiveContact(contact);
     setIsEditMode(true);
-    setIsAddModalOpen(true);
+    setIsAddContactModalOpen(true);
   };
 
   return (
@@ -85,13 +105,36 @@ const NetworkPage: React.FC = () => {
         filteredClusters={activeFilters}
         searchTerm={searchTerm}
         onNodeClick={handleNodeClick}
-        onAddClick={handleAddClick}
+        onAddClick={toggleFabMenu}
       />
       
+      {/* Floating Action Button Menu */}
+      {isFabOpen && (
+        <div className="fixed right-6 bottom-24 z-30 flex flex-col-reverse items-end space-y-reverse space-y-2">
+          <div className="glass rounded-lg p-2 shadow-lg">
+            <button 
+              className="flex items-center w-full px-3 py-2 rounded-md hover:bg-white/20 transition-colors"
+              onClick={handleAddContactClick}
+            >
+              <UserPlus className="h-5 w-5 mr-2" />
+              <span>Kontakt hinzufügen</span>
+            </button>
+            <button 
+              className="flex items-center w-full px-3 py-2 rounded-md hover:bg-white/20 transition-colors"
+              onClick={handleAddClusterClick}
+            >
+              <FolderPlus className="h-5 w-5 mr-2" />
+              <span>Bereich hinzufügen</span>
+            </button>
+          </div>
+        </div>
+      )}
+      
+      {/* Modals */}
       <AddContactModal 
-        isOpen={isAddModalOpen}
+        isOpen={isAddContactModalOpen}
         onClose={() => {
-          setIsAddModalOpen(false);
+          setIsAddContactModalOpen(false);
           setIsEditMode(false);
           // Force refresh of network data after modal is closed
           refetchNetwork();
@@ -99,6 +142,15 @@ const NetworkPage: React.FC = () => {
         clusters={clusters || []}
         isEdit={isEditMode}
         contact={isEditMode && activeContact ? activeContact : undefined}
+      />
+      
+      <AddClusterModal 
+        isOpen={isAddClusterModalOpen}
+        onClose={() => {
+          setIsAddClusterModalOpen(false);
+          // Force refresh of network data after modal is closed
+          refetchNetwork();
+        }}
       />
       
       <ContactDetailDrawer 

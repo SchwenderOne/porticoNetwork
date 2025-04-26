@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { NetworkData, Node as NetworkNode } from '@shared/schema';
-import { Loader2, Plus } from 'lucide-react';
+import { Loader2, Plus, MoreHorizontal } from 'lucide-react';
 import { initializeNetworkGraph } from '@/lib/d3-utils';
 
 interface GraphCanvasProps {
@@ -35,7 +35,15 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({
       
       if (node.type === 'cluster') {
         // For clusters, check if they're in the filtered list
-        const clusterId = parseInt(node.id);
+        // Extrahiere die ID, falls es ein Präfix enthält
+        const clusterId = node.originalId !== undefined 
+          ? node.originalId 
+          : (node.id.startsWith('cluster-') 
+              ? parseInt(node.id.replace('cluster-', '')) 
+              : parseInt(node.id));
+        
+        // Portico-Node wurde bereits oben berücksichtigt, doppelte Prüfung entfernen
+        
         return !isNaN(clusterId) && filteredClusters.includes(clusterId);
       } else if (node.type === 'contact') {
         // For contacts, check cluster filter and search term
@@ -128,7 +136,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({
         className="fab absolute right-6 bottom-6 bg-gradient-to-r from-blue-500 to-purple-500 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg"
         onClick={onAddClick}
       >
-        <Plus className="h-6 w-6" />
+        <MoreHorizontal className="h-6 w-6" />
       </button>
     </div>
   );
