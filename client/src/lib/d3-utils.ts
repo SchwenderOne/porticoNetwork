@@ -118,8 +118,12 @@ export function initializeNetworkGraph(
     .attr("rx", 16)
     .attr("ry", 16)
     .attr("fill", (d: any) => {
+      // Suche den entsprechenden Cluster-Node
+      // Da Cluster jetzt im Format "cluster-X" sind, suchen wir nach "cluster-[clusterId]"
       const clusterNode = nodes.find(n => 
-        n.type === 'cluster' && n.id === String(d.clusterId)
+        n.type === 'cluster' && 
+        (n.id === `cluster-${d.clusterId}` || 
+         (n.originalId !== undefined && n.originalId === d.clusterId))
       );
       const baseColor = clusterNode?.color || 'rgba(200, 200, 200, 0.45)';
       

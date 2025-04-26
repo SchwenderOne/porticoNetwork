@@ -88,12 +88,19 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({
     }
   }, [filteredData, searchTerm, data]);
   
+  // Referenzzähler für Re-Renders
+  const renderCountRef = useRef(0);
+  
   // Initialize the graph
   useEffect(() => {
     if (!data || isLoading || !svgRef.current || !containerRef.current) {
       return;
     }
 
+    // Jedes Mal komplett neu zeichnen, um sicherzustellen, dass neue Nodes angezeigt werden
+    renderCountRef.current += 1;
+    console.log(`Re-rendering graph, count: ${renderCountRef.current}, nodes: ${filteredData.nodes.length}`);
+    
     // Initialize the graph with filtered data
     const cleanup = initializeNetworkGraph(
       svgRef.current,

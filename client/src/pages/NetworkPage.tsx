@@ -76,6 +76,21 @@ const NetworkPage: React.FC = () => {
     setIsAddClusterModalOpen(true);
     setIsFabOpen(false);
   };
+  
+  // Handle closing of modals with forced refresh
+  const handleModalClose = () => {
+    setIsAddContactModalOpen(false);
+    setIsAddClusterModalOpen(false);
+    setIsEditMode(false);
+    
+    // Force refresh of network data
+    refetchNetwork();
+    
+    // Force a short delay and then refresh again to ensure data is updated
+    setTimeout(() => {
+      refetchNetwork();
+    }, 500);
+  };
 
   // Handle edit button click
   const handleEditClick = (contact: NetworkNode) => {
@@ -133,12 +148,7 @@ const NetworkPage: React.FC = () => {
       {/* Modals */}
       <AddContactModal 
         isOpen={isAddContactModalOpen}
-        onClose={() => {
-          setIsAddContactModalOpen(false);
-          setIsEditMode(false);
-          // Force refresh of network data after modal is closed
-          refetchNetwork();
-        }}
+        onClose={handleModalClose}
         clusters={clusters || []}
         isEdit={isEditMode}
         contact={isEditMode && activeContact ? activeContact : undefined}
@@ -146,11 +156,7 @@ const NetworkPage: React.FC = () => {
       
       <AddClusterModal 
         isOpen={isAddClusterModalOpen}
-        onClose={() => {
-          setIsAddClusterModalOpen(false);
-          // Force refresh of network data after modal is closed
-          refetchNetwork();
-        }}
+        onClose={handleModalClose}
       />
       
       <ContactDetailDrawer 
