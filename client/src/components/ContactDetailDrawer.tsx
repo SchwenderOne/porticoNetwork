@@ -65,7 +65,12 @@ const ContactDetailDrawer: React.FC<ContactDetailDrawerProps> = ({
     if (!contact) return;
 
     try {
-      await apiRequest('DELETE', `/api/contacts/${contact.id}`);
+      // Verwende originalId, wenn vorhanden, sonst extrahiere ID aus dem ID-String
+      const contactId = contact.originalId !== undefined 
+        ? contact.originalId 
+        : parseInt(contact.id.replace('contact-', ''));
+        
+      await apiRequest('DELETE', `/api/contacts/${contactId}`);
       queryClient.invalidateQueries({ queryKey: ['/api/network'] });
       toast({
         title: "Kontakt gelöscht",

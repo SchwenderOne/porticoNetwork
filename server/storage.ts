@@ -237,41 +237,44 @@ export class MemStorage implements IStorage {
       color: "rgba(255, 144, 104, 0.6)"
     };
     
-    // Map clusters and contacts to nodes
+    // Map clusters and contacts to nodes with distinct IDs
+    // Use 'cluster-{id}' for clusters and 'contact-{id}' for contacts
     const nodes: Node[] = [
       porticoNode,
       ...clusters.map(cluster => ({
-        id: cluster.id.toString(),
+        id: `cluster-${cluster.id}`,
         type: 'cluster' as const,
         name: cluster.name,
-        color: cluster.color
+        color: cluster.color,
+        originalId: cluster.id // Keep the original ID for reference
       })),
       ...contacts.map(contact => ({
-        id: contact.id.toString(),
+        id: `contact-${contact.id}`,
         type: 'contact' as const,
         name: contact.name,
         role: contact.role,
         email: contact.email || undefined,
         phone: contact.phone || undefined,
         notes: contact.notes || undefined,
-        clusterId: contact.clusterId
+        clusterId: contact.clusterId,
+        originalId: contact.id // Keep the original ID for reference
       }))
     ];
     
     // Connect contacts to their respective clusters
     const contactClusterLinks: Link[] = contacts.map(contact => ({
-      id: `contact-cluster-${contact.id}`,
-      source: contact.clusterId.toString(),
-      target: contact.id.toString(),
+      id: `link-cluster-contact-${contact.id}`,
+      source: `cluster-${contact.clusterId}`,
+      target: `contact-${contact.id}`,
       sourceType: "cluster",
       targetType: "contact"
     }));
     
     // Create links from Portico to each cluster
-    const porticoLinks: Link[] = clusters.map((cluster, index) => ({
-      id: `portico-${cluster.id}`,
+    const porticoLinks: Link[] = clusters.map((cluster) => ({
+      id: `link-portico-cluster-${cluster.id}`,
       source: "portico",
-      target: cluster.id.toString(),
+      target: `cluster-${cluster.id}`,
       sourceType: "cluster",
       targetType: "cluster"
     }));

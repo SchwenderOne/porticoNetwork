@@ -69,6 +69,7 @@ export interface Node {
   y?: number;
   fx?: number | null;
   fy?: number | null;
+  originalId?: number; // Hinzugefügt für die eindeutige Referenz auf die ursprüngliche ID
 }
 
 export interface Link {
