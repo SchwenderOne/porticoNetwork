@@ -37,18 +37,32 @@ export class MemStorage implements IStorage {
   private connectionCurrentId: number;
 
   constructor() {
+    // Für Debug-Zwecke den Initialisierungsprozess protokollieren
+    console.log('MemStorage wird initialisiert...');
+    
     this.clusters = new Map();
     this.contacts = new Map();
     this.connections = new Map();
-    this.clusterCurrentId = 1;
+    
+    // Mit Cluster ID 5 beginnen, damit wir Raum für die vordefinierten haben
+    this.clusterCurrentId = 5;
     this.contactCurrentId = 1;
     this.connectionCurrentId = 1;
 
-    // Initialize with some default clusters
-    this.createCluster({ name: "Marketing", color: "rgba(173, 216, 230, 0.45)" });
-    this.createCluster({ name: "Finanzen", color: "rgba(144, 238, 144, 0.45)" });
-    this.createCluster({ name: "Technologie", color: "rgba(221, 160, 221, 0.45)" });
-    this.createCluster({ name: "Vertrieb", color: "rgba(255, 255, 224, 0.45)" });
+    // Einige Cluster mit festen IDs für Konsistenz initialisieren
+    const defaultClusters = [
+      { id: 1, name: "Marketing", color: "rgba(173, 216, 230, 0.45)" },
+      { id: 2, name: "Finanzen", color: "rgba(144, 238, 144, 0.45)" },
+      { id: 3, name: "Technologie", color: "rgba(221, 160, 221, 0.45)" },
+      { id: 4, name: "Vertrieb", color: "rgba(255, 255, 224, 0.45)" }
+    ];
+    
+    // Vordefinierte Cluster mit festen IDs hinzufügen
+    defaultClusters.forEach(cluster => {
+      this.clusters.set(cluster.id, cluster);
+    });
+    
+    console.log(`MemStorage wurde mit ${this.clusters.size} vordefinierten Clustern initialisiert`);
   }
 
   // Cluster methods
@@ -61,9 +75,18 @@ export class MemStorage implements IStorage {
   }
 
   async createCluster(insertCluster: InsertCluster): Promise<Cluster> {
+    // Nächste verfügbare ID verwenden
     const id = this.clusterCurrentId++;
+    
+    // Cluster mit der neuen ID erstellen
     const cluster: Cluster = { ...insertCluster, id };
+    
+    // Cluster in die Map einfügen
     this.clusters.set(id, cluster);
+    
+    console.log(`Neuer Cluster erstellt: ID=${id}, Name=${cluster.name}, Farbe=${cluster.color}`);
+    console.log(`Aktuelle Cluster-Anzahl: ${this.clusters.size}`);
+    
     return cluster;
   }
 
@@ -228,6 +251,10 @@ export class MemStorage implements IStorage {
     const clusters = await this.getClusters();
     const contacts = await this.getContacts();
     const connections = await this.getConnections();
+    
+    // Logging für Debug-Zwecke
+    console.log(`getNetworkData: Abfrage von ${clusters.length} Clustern und ${contacts.length} Kontakten`);
+    console.log(`Cluster IDs: ${clusters.map(c => c.id).join(', ')}`);
     
     // Create a central Portico node
     const porticoNode: Node = {
