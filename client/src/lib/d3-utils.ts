@@ -238,21 +238,110 @@ export function initializeNetworkGraph(
     }
   }
   
+  // Vorherige Transformation aus dem localStorage wiederherstellen
+  const savedTransform = localStorage.getItem('networkZoomTransform');
+  
   // Add zoom functionality
   const zoom = d3.zoom()
     .scaleExtent([0.3, 3]) // Min and max zoom scale
     .on("zoom", (event) => {
       // Transform the graph container based on zoom event
       graphContainer.attr("transform", event.transform);
+      
+      // Speichern der aktuellen Transformation in localStorage
+      localStorage.setItem('networkZoomTransform', JSON.stringify({
+        x: event.transform.x,
+        y: event.transform.y,
+        k: event.transform.k
+      }));
     });
   
   // Enable zooming on the SVG element
   svg.call(zoom as any);
   
-  // Add zoom controls
+  // Hilfsfunktion für "Fit-to-View" Funktionalität
+  const fitToViewHelper = () => {
+    // Berechne die Grenzen des Netzwerks
+    const nodeElements = graphContainer.selectAll(".nodes g");
+    if (nodeElements.size() === 0) return;
+    
+    // Berechne den Mittelpunkt und die benötigte Skalierung
+    const bounds = { 
+      minX: Infinity, minY: Infinity, 
+      maxX: -Infinity, maxY: -Infinity 
+    };
+    
+    nodeElements.each((d: any) => {
+      const x = d.x || 0;
+      const y = d.y || 0;
+      const radius = d.type === 'cluster' ? 100 : 85;
+      
+      bounds.minX = Math.min(bounds.minX, x - radius);
+      bounds.minY = Math.min(bounds.minY, y - radius);
+      bounds.maxX = Math.max(bounds.maxX, x + radius);
+      bounds.maxY = Math.max(bounds.maxY, y + radius);
+    });
+    
+    // Hinzufügen eines Puffers
+    const padding = 40;
+    bounds.minX -= padding;
+    bounds.minY -= padding;
+    bounds.maxX += padding;
+    bounds.maxY += padding;
+    
+    const dx = bounds.maxX - bounds.minX;
+    const dy = bounds.maxY - bounds.minY;
+    const x = (bounds.minX + bounds.maxX) / 2;
+    const y = (bounds.minY + bounds.maxY) / 2;
+    
+    // Berechne die benötigte Skalierung
+    const scale = Math.min(
+      0.9 * width / dx,
+      0.9 * height / dy
+    );
+    
+    // Setze die Transformation
+    svg.transition().duration(750).call(
+      zoom.transform as any,
+      d3.zoomIdentity.translate(width / 2, height / 2)
+        .scale(scale)
+        .translate(-x, -y)
+    );
+  };
+  
+  // Vorherige Zoomstufe und Position wiederherstellen, falls vorhanden
+  if (savedTransform) {
+    try {
+      const transform = JSON.parse(savedTransform);
+      // Zeitverzögert anwenden, damit die Simulation Zeit hat, Knoten zu positionieren
+      setTimeout(() => {
+        svg.call(
+          zoom.transform as any,
+          d3.zoomIdentity
+            .translate(transform.x, transform.y)
+            .scale(transform.k)
+        );
+        console.log("Zoom-Transformation wiederhergestellt:", transform);
+      }, 100);
+    } catch (e) {
+      console.error('Failed to restore zoom transform:', e);
+    }
+  } else {
+    // Wenn keine gespeicherte Transformation vorhanden ist, 
+    // nach einer kurzen Verzögerung automatisch an die Netzwerkgröße anpassen
+    setTimeout(() => {
+      // Automatische Anfangsanpassung des Zooms
+      const nodeElements = graphContainer.selectAll(".nodes g");
+      if (nodeElements.size() > 0) {
+        fitToViewHelper();
+      }
+    }, 300);
+  }
+  
+  // Add zoom controls - positioniert auf der linken Seite, um Überlappung zu vermeiden
   const zoomControls = svg.append("g")
     .attr("class", "zoom-controls")
-    .attr("transform", `translate(${width - 70}, ${height - 100})`);
+    .attr("transform", `translate(25, ${height - 150})`);
   
   // Zoom-In Button
   zoomControls.append("circle")
@@ -288,15 +377,77 @@ export function initializeNetworkGraph(
     .text("−")
     .style("pointer-events", "none");
   
+  // Fit to View Button (zeigt das gesamte Netzwerk)
+  zoomControls.append("circle")
+    .attr("cx", 25)
+    .attr("cy", 125)
+    .attr("r", 20)
+    .attr("fill", "rgba(255, 255, 255, 0.8)")
+    .attr("stroke", "#ccc");
+  
+  // Kleines Icon zum Anzeigen der "alles anzeigen" Funktion (Fit to View)
+  const fitToViewIcon = zoomControls.append("g")
+    .attr("transform", "translate(25, 125)")
+    .style("pointer-events", "none");
+  
+  // Äußerer Rahmen für das Symbol
+  fitToViewIcon.append("rect")
+    .attr("x", -8)
+    .attr("y", -8) 
+    .attr("width", 16)
+    .attr("height", 16)
+    .attr("rx", 2)
+    .attr("fill", "none")
+    .attr("stroke", "#333")
+    .attr("stroke-width", 1.5);
+  
+  // Vier kleine Pfeile nach außen an den Ecken
+  // Oben links
+  fitToViewIcon.append("path")
+    .attr("d", "M-6,-2 L-6,-6 L-2,-6")
+    .attr("fill", "none")
+    .attr("stroke", "#333")
+    .attr("stroke-width", 1.5);
+    
+  // Oben rechts
+  fitToViewIcon.append("path")
+    .attr("d", "M6,-2 L6,-6 L2,-6") 
+    .attr("fill", "none")
+    .attr("stroke", "#333")
+    .attr("stroke-width", 1.5);
+    
+  // Unten links  
+  fitToViewIcon.append("path")
+    .attr("d", "M-6,2 L-6,6 L-2,6")
+    .attr("fill", "none") 
+    .attr("stroke", "#333")
+    .attr("stroke-width", 1.5);
+    
+  // Unten rechts
+  fitToViewIcon.append("path") 
+    .attr("d", "M6,2 L6,6 L2,6")
+    .attr("fill", "none")
+    .attr("stroke", "#333") 
+    .attr("stroke-width", 1.5);
+  
   // Event listeners for zoom buttons
-  zoomControls.select("circle:first-of-type")
-    .on("click", () => {
+  zoomControls.select("circle:nth-of-type(1)")
+    .on("click", (event) => {
+      event.stopPropagation(); // Verhindert, dass das Event weitergeleitet wird
       svg.transition().duration(300).call(zoom.scaleBy as any, 1.3);
     });
   
-  zoomControls.select("circle:last-of-type")
-    .on("click", () => {
+  zoomControls.select("circle:nth-of-type(2)")
+    .on("click", (event) => {
+      event.stopPropagation(); // Verhindert, dass das Event weitergeleitet wird
       svg.transition().duration(300).call(zoom.scaleBy as any, 0.7);
+    });
+  
+  // Fit to View Button - Zeigt das gesamte Netzwerk
+  zoomControls.select("circle:nth-of-type(3)")
+    .on("click", (event) => {
+      event.stopPropagation(); // Verhindert, dass das Event weitergeleitet wird
+      fitToViewHelper(); // Verwende die bereits definierte Hilfsfunktion
     });
   
   // Return cleanup function
