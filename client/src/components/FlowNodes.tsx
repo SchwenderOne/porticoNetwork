@@ -1,7 +1,7 @@
 import React from 'react';
 import { Handle, Position } from 'reactflow';
-import { motion } from 'framer-motion';
 import { Node as NetworkNode } from '@shared/schema';
+import { motion } from 'framer-motion';
 
 interface NodeProps {
   data: {
@@ -17,6 +17,8 @@ export const ClusterNode: React.FC<NodeProps> = ({ data }) => (
     animate={{ opacity: 1, scale: 1 }}
     exit={{ opacity: 0, scale: 0.8 }}
     transition={{ duration: 0.3 }}
+    whileHover={{ scale: 1.05 }}
+    whileTap={{ scale: 0.95 }}
     className="glass p-3 rounded-lg border relative"
     style={{ backgroundColor: data.color }}
   >
@@ -32,6 +34,8 @@ export const ContactNode: React.FC<NodeProps> = ({ data }) => (
     animate={{ opacity: 1, scale: 1 }}
     exit={{ opacity: 0, scale: 0.8 }}
     transition={{ duration: 0.3 }}
+    whileHover={{ scale: 1.05 }}
+    whileTap={{ scale: 0.95 }}
     className="glass p-2 rounded-lg border relative"
     style={{ backgroundColor: data.color }}
   >

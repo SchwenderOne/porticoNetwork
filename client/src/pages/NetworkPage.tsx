@@ -22,6 +22,7 @@ import ReactFlow, { ReactFlowProvider, Controls, Background, Node, Edge, applyNo
 import { nodeTypes } from '@/components/FlowNodes';
 import 'reactflow/dist/style.css';
 import { useTranslation } from 'react-i18next';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const NetworkPage: React.FC = () => {
   const { toast } = useToast();
@@ -294,48 +295,56 @@ const NetworkPage: React.FC = () => {
           {isMinimized ? <Maximize2 className="h-5 w-5" /> : <Minimize2 className="h-5 w-5" />}
         </button>
       </div>
-      {!isMinimized && (
-      <FilterSection 
-        clusters={clusters || []}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        activeFilters={activeFilters}
-        toggleFilter={toggleFilter}
-      />
-      )}
+      <AnimatePresence>
+        {!isMinimized && (
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}>
+            <FilterSection 
+              clusters={clusters || []}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              activeFilters={activeFilters}
+              toggleFilter={toggleFilter}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       {!isMinimized && (
-        <ReactFlowProvider>
-        <div className="glass rounded-xl p-4 mb-6 h-[600px] relative">
-          {/* Reset-View Button */}
-          <button
-            className="absolute top-2 right-2 z-10 bg-white bg-opacity-80 p-2 rounded shadow hover:bg-opacity-100"
-            onClick={() => rfInstance?.fitView({ duration: 800 })}
-          >Reset View</button>
-          <ReactFlow
-            nodes={flowNodes}
-            edges={flowEdges}
-            nodeTypes={nodeTypes}
-            onInit={setRfInstance}
-            onNodesChange={(changes: NodeChange[]) => setFlowNodes(nds => applyNodeChanges(changes, nds))}
-            onEdgesChange={(changes: EdgeChange[]) => setFlowEdges(eds => applyEdgeChanges(changes, eds))}
-            onNodeClick={(event, node) => node.data.originalNode && handleNodeClick(node.data.originalNode)}
-            onNodeDragStop={(_, node) => {
-              const saved = JSON.parse(localStorage.getItem('nodePositions') || '{}');
-              saved[node.id] = node.position;
-              localStorage.setItem('nodePositions', JSON.stringify(saved));
-            }}
-            onPaneClick={() => {
-              // Schließe alle Drawers bei Klick auf leere Fläche
-              setIsDrawerOpen(false);
-              setIsClusterDrawerOpen(false);
-            }}
-          >
-            <Controls showFitView={false} />
-            <Background />
-          </ReactFlow>
-        </div>
-        </ReactFlowProvider>
+        <AnimatePresence>
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.3 }} className="mb-6">
+            <ReactFlowProvider>
+            <div className="glass rounded-xl p-4 mb-6 h-[600px] relative">
+              {/* Reset-View Button */}
+              <button
+                className="absolute top-2 right-2 z-10 bg-white bg-opacity-80 p-2 rounded shadow hover:bg-opacity-100"
+                onClick={() => rfInstance?.fitView({ duration: 800 })}
+              >Reset View</button>
+              <ReactFlow
+                nodes={flowNodes}
+                edges={flowEdges}
+                nodeTypes={nodeTypes}
+                onInit={setRfInstance}
+                onNodesChange={(changes: NodeChange[]) => setFlowNodes(nds => applyNodeChanges(changes, nds))}
+                onEdgesChange={(changes: EdgeChange[]) => setFlowEdges(eds => applyEdgeChanges(changes, eds))}
+                onNodeClick={(event, node) => node.data.originalNode && handleNodeClick(node.data.originalNode)}
+                onNodeDragStop={(_, node) => {
+                  const saved = JSON.parse(localStorage.getItem('nodePositions') || '{}');
+                  saved[node.id] = node.position;
+                  localStorage.setItem('nodePositions', JSON.stringify(saved));
+                }}
+                onPaneClick={() => {
+                  // Schließe alle Drawers bei Klick auf leere Fläche
+                  setIsDrawerOpen(false);
+                  setIsClusterDrawerOpen(false);
+                }}
+              >
+                <Controls showFitView={false} />
+                <Background />
+              </ReactFlow>
+            </div>
+            </ReactFlowProvider>
+          </motion.div>
+        </AnimatePresence>
       )}
       
       {/* Floating Action Button Toggle */}
