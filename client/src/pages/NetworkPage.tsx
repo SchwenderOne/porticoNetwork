@@ -91,6 +91,10 @@ const NetworkPage: React.FC = () => {
 
   // Handle node click
   const handleNodeClick = (node: NetworkNode) => {
+    // Schließe alle Detail-Drawer
+    setIsDrawerOpen(false);
+    setIsClusterDrawerOpen(false);
+    // Öffne passenden Drawer
     if (node.type === 'contact') {
       setActiveContact(node);
       setIsDrawerOpen(true);
@@ -241,7 +245,7 @@ const NetworkPage: React.FC = () => {
         id: n.id,
         type: n.type,
         data: {
-          label: n.type === 'cluster' ? t(`cluster.${(n as any).originalId}`) : n.name,
+          label: n.name,
           color: n.color,
           originalNode: n,
         },
@@ -306,7 +310,7 @@ const NetworkPage: React.FC = () => {
           {/* Reset-View Button */}
           <button
             className="absolute top-2 right-2 z-10 bg-white bg-opacity-80 p-2 rounded shadow hover:bg-opacity-100"
-            onClick={() => rfInstance?.fitView()}
+            onClick={() => rfInstance?.fitView({ duration: 800 })}
           >Reset View</button>
           <ReactFlow
             nodes={flowNodes}
@@ -320,6 +324,11 @@ const NetworkPage: React.FC = () => {
               const saved = JSON.parse(localStorage.getItem('nodePositions') || '{}');
               saved[node.id] = node.position;
               localStorage.setItem('nodePositions', JSON.stringify(saved));
+            }}
+            onPaneClick={() => {
+              // Schließe alle Drawers bei Klick auf leere Fläche
+              setIsDrawerOpen(false);
+              setIsClusterDrawerOpen(false);
             }}
           >
             <Controls showFitView={false} />
@@ -392,6 +401,10 @@ const NetworkPage: React.FC = () => {
         onEditClick={handleClusterEditClick}
         onDeleteClick={handleClusterDeleteClick}
         onNodeClick={handleNodeClick}
+        onContactEditClick={contactNode => {
+          setIsClusterDrawerOpen(false);
+          handleEditClick(contactNode);
+        }}
       />
     </main>
   );
