@@ -1,5 +1,6 @@
 import React from 'react';
 import { Handle, Position } from 'reactflow';
+import { motion } from 'framer-motion';
 import { Node as NetworkNode } from '@shared/schema';
 
 interface NodeProps {
@@ -11,19 +12,33 @@ interface NodeProps {
 }
 
 export const ClusterNode: React.FC<NodeProps> = ({ data }) => (
-  <div className="glass p-3 rounded-lg border relative" style={{ backgroundColor: data.color }}>
+  <motion.div
+    initial={{ opacity: 0, scale: 0.8 }}
+    animate={{ opacity: 1, scale: 1 }}
+    exit={{ opacity: 0, scale: 0.8 }}
+    transition={{ duration: 0.3 }}
+    className="glass p-3 rounded-lg border relative"
+    style={{ backgroundColor: data.color }}
+  >
     <strong>{data.label}</strong>
     <Handle id="top" type="target" position={Position.Top} />
     <Handle id="bottom" type="source" position={Position.Bottom} />
-  </div>
+  </motion.div>
 );
 
 export const ContactNode: React.FC<NodeProps> = ({ data }) => (
-  <div className="glass p-2 rounded-lg border relative" style={{ backgroundColor: data.color }}>
+  <motion.div
+    initial={{ opacity: 0, scale: 0.8 }}
+    animate={{ opacity: 1, scale: 1 }}
+    exit={{ opacity: 0, scale: 0.8 }}
+    transition={{ duration: 0.3 }}
+    className="glass p-2 rounded-lg border relative"
+    style={{ backgroundColor: data.color }}
+  >
     {data.label}
     <Handle id="left" type="target" position={Position.Left} />
     <Handle id="right" type="source" position={Position.Right} />
-  </div>
+  </motion.div>
 );
 
 export const nodeTypes = {
