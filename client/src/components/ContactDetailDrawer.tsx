@@ -15,6 +15,7 @@ interface ContactDetailDrawerProps {
   contact: NetworkNode | null;
   clusters: Cluster[];
   onEditClick: (contact: NetworkNode) => void;
+  onNodeClick: (node: NetworkNode) => void;
 }
 
 const ContactDetailDrawer: React.FC<ContactDetailDrawerProps> = ({
@@ -23,6 +24,7 @@ const ContactDetailDrawer: React.FC<ContactDetailDrawerProps> = ({
   contact,
   clusters,
   onEditClick,
+  onNodeClick
 }) => {
   const { toast } = useToast();
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
@@ -79,6 +81,8 @@ const ContactDetailDrawer: React.FC<ContactDetailDrawerProps> = ({
         
       await apiRequest('DELETE', `/api/contacts/${contactId}`);
       queryClient.invalidateQueries({ queryKey: ['/api/network'] });
+      // Network neu laden
+      await queryClient.refetchQueries({ queryKey: ['/api/network'] });
       toast({
         title: "Kontakt gelöscht",
         description: `${contact.name} wurde erfolgreich gelöscht.`,
@@ -138,6 +142,22 @@ const ContactDetailDrawer: React.FC<ContactDetailDrawerProps> = ({
                   <Users className="h-4 w-4 mr-1" />
                   Cluster
                 </h5>
+                <button
+                  className="inline-block p-1 hover:bg-gray-100 rounded"
+                  onClick={() => {
+                    onClose();
+                    const clusterData = clusters.find(c => c.id === contact.clusterId!);
+                    if (clusterData) {
+                      onNodeClick({
+                        id: `cluster-${clusterData.id}`,
+                        type: 'cluster',
+                        name: clusterData.name,
+                        color: clusterData.color,
+                        originalId: clusterData.id
+                      });
+                    }
+                  }}
+                >
                 <Badge 
                   className="text-white"
                   style={{ 
@@ -147,6 +167,7 @@ const ContactDetailDrawer: React.FC<ContactDetailDrawerProps> = ({
                 >
                   {getClusterName(contact.clusterId)}
                 </Badge>
+                </button>
               </div>
               
               {(contact.email || contact.phone) && (
@@ -197,10 +218,26 @@ const ContactDetailDrawer: React.FC<ContactDetailDrawerProps> = ({
                   Kontakte im selben Cluster ({filteredRelatedContacts.length})
                 </h5>
                 <div className="glass p-2 rounded-lg">
-                  {filteredRelatedContacts.map((relatedContact) => (
-                    <div 
+                  {filteredRelatedContacts.map((relatedContact) => {
+                    const node: NetworkNode = {
+                      id: `contact-${relatedContact.id}`,
+                      type: 'contact',
+                      name: relatedContact.name,
+                      role: relatedContact.role,
+                      email: relatedContact.email || undefined,
+                      phone: relatedContact.phone || undefined,
+                      notes: relatedContact.notes || undefined,
+                      clusterId: relatedContact.clusterId,
+                      originalId: relatedContact.id
+                    };
+                    return (
+                      <button
                       key={relatedContact.id} 
-                      className="contact-node p-3 rounded-lg mb-2 flex items-center hover:bg-white/20 transition-colors"
+                        onClick={() => {
+                          onClose();
+                          onNodeClick(node);
+                        }}
+                        className="contact-node p-3 rounded-lg mb-2 flex items-center hover:bg-white/20 transition-colors w-full text-left"
                     >
                       <div 
                         className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-sm font-semibold mr-3 shadow-sm"
@@ -214,8 +251,9 @@ const ContactDetailDrawer: React.FC<ContactDetailDrawerProps> = ({
                         <p className="font-medium">{relatedContact.name}</p>
                         <p className="text-xs text-gray-600">{relatedContact.role}</p>
                       </div>
-                    </div>
-                  ))}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -223,23 +261,15 @@ const ContactDetailDrawer: React.FC<ContactDetailDrawerProps> = ({
           
           <Separator className="my-4" />
           
-          <div className="flex justify-between">
-            <Button
-              variant="outline"
-              className="flex items-center"
-              onClick={() => onEditClick(contact)}
-            >
-              <Edit className="h-4 w-4 mr-1" />
-              Bearbeiten
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => onEditClick(contact)}>
+              <Edit className="h-5 w-5" />
             </Button>
-            
-            <Button
-              variant="outline"
-              className="border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700 flex items-center"
-              onClick={() => setShowDeleteDialog(true)}
-            >
-              <Trash2 className="h-4 w-4 mr-1" />
-              Löschen
+            <Button variant="outline" className="border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => setShowDeleteDialog(true)}>
+              <Trash2 className="h-5 w-5" />
+            </Button>
+            <Button variant="outline" onClick={onClose}>
+              <X className="h-5 w-5" />
             </Button>
           </div>
         </div>

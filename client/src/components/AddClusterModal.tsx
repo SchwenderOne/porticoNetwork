@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { insertClusterSchema } from '@shared/schema';
+import { insertClusterSchema, Node as NetworkNode } from '@shared/schema';
 
 // Form Schema Validierung
 const formSchema = insertClusterSchema.extend({
@@ -28,22 +28,32 @@ type FormValues = z.infer<typeof formSchema>;
 interface AddClusterModalProps {
   isOpen: boolean;
   onClose: () => void;
+  isEdit?: boolean;
+  cluster?: NetworkNode;
 }
 
 const AddClusterModal: React.FC<AddClusterModalProps> = ({
   isOpen,
   onClose,
+  isEdit = false,
+  cluster,
 }) => {
   const { toast } = useToast();
   
-  // Form Setup
+  // Form Setup mit Prefill für Edit
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: '',
-      color: 'rgba(144, 238, 144, 0.45)', // Standard Farbe
+      name: isEdit && cluster ? cluster.name : '',
+      color: isEdit && cluster ? cluster.color || 'rgba(144, 238, 144, 0.45)' : 'rgba(144, 238, 144, 0.45)',
     },
   });
+  // Prefill on cluster change
+  useEffect(() => {
+    if (isEdit && cluster) {
+      form.reset({ name: cluster.name, color: cluster.color || '' });
+    }
+  }, [isEdit, cluster]);
   
   const isSubmitting = form.formState.isSubmitting;
   
@@ -61,28 +71,33 @@ const AddClusterModal: React.FC<AddClusterModalProps> = ({
   
   const onSubmit = async (data: FormValues) => {
     try {
-      // Neuen Bereich erstellen
+      if (isEdit && cluster?.originalId) {
+        // Bereich aktualisieren
+        await apiRequest('PATCH', `/api/clusters/${cluster.originalId}`, data);
+        toast({
+          title: "Bereich aktualisiert",
+          description: `${data.name} wurde erfolgreich aktualisiert.`,
+        });
+      } else {
+        // Neuer Bereich
       await apiRequest('POST', '/api/clusters', data);
-      
-      // Queries invalidieren
+        toast({
+          title: "Bereich hinzugefügt",
+          description: `${data.name} wurde erfolgreich zum Netzwerk hinzugefügt.`,
+        });
+      }
+      // Queries invalidieren und sofort neu laden
       await queryClient.invalidateQueries({ queryKey: ['/api/network'] });
       await queryClient.invalidateQueries({ queryKey: ['/api/clusters'] });
-      
-      // Daten neu laden
       await queryClient.refetchQueries({ queryKey: ['/api/network'] });
-      
-      toast({
-        title: "Bereich hinzugefügt",
-        description: `${data.name} wurde erfolgreich zum Netzwerk hinzugefügt.`,
-      });
-      
+      await queryClient.refetchQueries({ queryKey: ['/api/clusters'] });
       form.reset();
       onClose();
     } catch (error) {
       console.error('Failed to save cluster:', error);
       toast({
         title: "Fehler",
-        description: "Der Bereich konnte nicht hinzugefügt werden.",
+        description: "Der Bereich konnte nicht gespeichert werden.",
         variant: "destructive",
       });
     }

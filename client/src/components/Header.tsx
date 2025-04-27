@@ -17,13 +17,13 @@ const Header: React.FC = () => {
           <Link href="/" className="text-primary hover:text-secondary transition-colors">
             Dashboard
           </Link>
-          <Link href="/" className="text-primary hover:text-secondary transition-colors">
+          <Link href="/network" className="text-primary hover:text-secondary transition-colors">
             Netzwerk
           </Link>
-          <Link href="/" className="text-primary hover:text-secondary transition-colors">
+          <Link href="/contacts" className="text-primary hover:text-secondary transition-colors">
             Kontakte
           </Link>
-          <Link href="/" className="text-primary hover:text-secondary transition-colors">
+          <Link href="/settings" className="text-primary hover:text-secondary transition-colors">
             Einstellungen
           </Link>
         </div>
@@ -46,21 +46,21 @@ const Header: React.FC = () => {
                 Dashboard
               </Link>
               <Link 
-                href="/" 
+                href="/network" 
                 className="px-3 py-2 hover:bg-gray-100 rounded-md"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Netzwerk
               </Link>
               <Link 
-                href="/" 
+                href="/contacts" 
                 className="px-3 py-2 hover:bg-gray-100 rounded-md"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Kontakte
               </Link>
               <Link 
-                href="/" 
+                href="/settings" 
                 className="px-3 py-2 hover:bg-gray-100 rounded-md"
                 onClick={() => setIsMobileMenuOpen(false)}
               >

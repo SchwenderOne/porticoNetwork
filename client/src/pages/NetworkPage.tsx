@@ -1,29 +1,42 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Node as NetworkNode, NetworkData, Cluster, Contact } from '@shared/schema';
 import HeroTitle from '@/components/HeroTitle';
 import FilterSection from '@/components/FilterSection';
-import GraphCanvas from '@/components/GraphCanvas';
 import AddContactModal from '@/components/AddContactModal';
 import AddClusterModal from '@/components/AddClusterModal';
 import ContactDetailDrawer from '@/components/ContactDetailDrawer';
+import ClusterDetailDrawer from '@/components/ClusterDetailDrawer';
 import { fuzzySearch } from '@/lib/fuzzySearch';
 import { 
   UserPlus, 
   FolderPlus,
-  X 
+  X,
+  Plus,
+  Minimize2,
+  Maximize2
 } from 'lucide-react';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import ReactFlow, { ReactFlowProvider, Controls, Background, Node, Edge, applyNodeChanges, applyEdgeChanges, NodeChange, EdgeChange, Position, ReactFlowInstance } from 'reactflow';
+import { nodeTypes } from '@/components/FlowNodes';
+import 'reactflow/dist/style.css';
 
 const NetworkPage: React.FC = () => {
+  const { toast } = useToast();
   // State for UI controls
   const [isAddContactModalOpen, setIsAddContactModalOpen] = useState(false);
   const [isAddClusterModalOpen, setIsAddClusterModalOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isClusterDrawerOpen, setIsClusterDrawerOpen] = useState(false);
+  const [isClusterEditMode, setIsClusterEditMode] = useState(false);
   const [activeContact, setActiveContact] = useState<NetworkNode | null>(null);
+  const [activeCluster, setActiveCluster] = useState<NetworkNode | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilters, setActiveFilters] = useState<number[]>([]);
   const [isFabOpen, setIsFabOpen] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
   
   // Fetch network data
   const { 
@@ -79,6 +92,9 @@ const NetworkPage: React.FC = () => {
     if (node.type === 'contact') {
       setActiveContact(node);
       setIsDrawerOpen(true);
+    } else if (node.type === 'cluster') {
+      setActiveCluster(node);
+      setIsClusterDrawerOpen(true);
     }
   };
 
@@ -113,6 +129,7 @@ const NetworkPage: React.FC = () => {
     setIsAddContactModalOpen(false);
     setIsAddClusterModalOpen(false);
     setIsEditMode(false);
+    setIsClusterEditMode(false);
     
     // Zurücksetzen des Session-Flags, damit eine neue Zoom-Berechnung erfolgt
     sessionStorage.removeItem('initialZoomPerformed');
@@ -142,13 +159,115 @@ const NetworkPage: React.FC = () => {
     setIsAddContactModalOpen(true);
   };
 
+  // Edit- & Delete-Handler für Cluster
+  const handleClusterEditClick = (clusterNode: NetworkNode) => {
+    setActiveCluster(clusterNode);
+    setIsClusterDrawerOpen(false);
+    setIsClusterEditMode(true);
+    setIsAddClusterModalOpen(true);
+  };
+
+  const handleClusterDeleteClick = async (clusterNode: NetworkNode) => {
+    const id = clusterNode.originalId;
+    try {
+      await apiRequest('DELETE', `/api/clusters/${id}`);
+      toast({ title: "Bereich gelöscht", description: `${clusterNode.name} wurde gelöscht.` });
+      // Queries invalidieren und sofort neu laden
+      await queryClient.invalidateQueries({ queryKey: ['/api/network'] });
+      await queryClient.invalidateQueries({ queryKey: ['/api/clusters'] });
+      await queryClient.refetchQueries({ queryKey: ['/api/network'] });
+      await queryClient.refetchQueries({ queryKey: ['/api/clusters'] });
+      setIsClusterDrawerOpen(false);
+    } catch (e) {
+      toast({ title: "Fehler", description: "Bereich konnte nicht gelöscht werden.", variant: "destructive" });
+    }
+  };
+
+  // State für React Flow Nodes & Edges mit Persistenz und ReactFlow-Instanz
+  const [flowNodes, setFlowNodes] = useState<Node[]>([]);
+  const [flowEdges, setFlowEdges] = useState<Edge[]>([]);
+  const [rfInstance, setRfInstance] = useState<ReactFlowInstance | null>(null);
+
+  // Initialisierung von Nodes + Edges bei Daten-Update mit radialem Mind-Map Layout
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem('nodePositions') || '{}');
+    // Container-Dimensionen (ggf. dynamisch ermitteln)
+    const width = 800;
+    const height = 600;
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const radiusCluster = Math.min(width, height) / 3;
+    const radiusContact = radiusCluster * 1.5;
+    // Cluster-Array
+    const clustersArr = networkData?.nodes.filter(n => n.type === 'cluster') || [];
+    const totalClusters = clustersArr.length;
+    // Nodes berechnen
+    const newNodes: Node[] = (networkData?.nodes || []).map((n) => {
+      let pos = saved[n.id];
+      if (!pos) {
+        if (n.id === 'portico') {
+          pos = { x: centerX, y: centerY };
+        } else if (n.type === 'cluster') {
+          const idx = clustersArr.findIndex(c => c.id === n.id);
+          const angle = (idx / totalClusters) * 2 * Math.PI;
+          pos = { x: centerX + radiusCluster * Math.cos(angle), y: centerY + radiusCluster * Math.sin(angle) };
+        } else {
+          // Kontakt-Knoten auf weiterem Ring
+          const clusterNode = clustersArr.find(c => c.originalId === n.clusterId || c.id === `cluster-${n.clusterId}`);
+          const idxCluster = clustersArr.indexOf(clusterNode as any);
+          const angle = (idxCluster / totalClusters) * 2 * Math.PI;
+          pos = { x: centerX + radiusContact * Math.cos(angle), y: centerY + radiusContact * Math.sin(angle) };
+        }
+      }
+      return { id: n.id, type: n.type, data: { label: n.name, color: n.color, originalNode: n }, position: pos };
+    });
+    // Kanten mit dynamischen Verbindungs-Punkten
+    const newEdges: Edge[] = (networkData?.links || []).map(l => {
+      const src = newNodes.find(node => node.id === l.source);
+      const tgt = newNodes.find(node => node.id === l.target);
+      let sourceHandle = 'bottom';
+      let targetHandle = 'top';
+      if (src && tgt) {
+        if (src.position.y > tgt.position.y) {
+          sourceHandle = 'top'; targetHandle = 'bottom';
+        } else if (src.position.y < tgt.position.y) {
+          sourceHandle = 'bottom'; targetHandle = 'top';
+        } else {
+          if (src.position.x < tgt.position.x) {
+            sourceHandle = 'right'; targetHandle = 'left';
+          } else {
+            sourceHandle = 'left'; targetHandle = 'right';
+          }
+        }
+      }
+      return {
+        id: l.id,
+        source: l.source,
+        target: l.target,
+        type: 'default',
+        sourceHandle,
+        targetHandle,
+      } as Edge;
+    });
+    setFlowNodes(newNodes);
+    setFlowEdges(newEdges);
+  }, [networkData]);
+
   return (
     <main className="container mx-auto px-4 py-8">
       <HeroTitle 
         title="Portico Netzwerk Visualisierung" 
         subtitle="Erkunden und verwalten Sie Ihre Kontakte und Cluster in einer interaktiven Mind-Map Darstellung."
       />
-      
+      <div className="flex justify-end mb-4">
+        <button
+          className="p-2 rounded bg-gray-100 hover:bg-gray-200 transition-colors"
+          onClick={() => setIsMinimized(!isMinimized)}
+        >
+          {isMinimized ? <Maximize2 className="h-5 w-5" /> : <Minimize2 className="h-5 w-5" />}
+        </button>
+      </div>
+      {!isMinimized && (
       <FilterSection 
         clusters={clusters || []}
         searchTerm={searchTerm}
@@ -156,38 +275,62 @@ const NetworkPage: React.FC = () => {
         activeFilters={activeFilters}
         toggleFilter={toggleFilter}
       />
+      )}
       
-      {/* 
-        Wir geben einen key an, damit React die Komponente komplett neu rendert,
-        wenn sich die Anzahl der Nodes ändert.
-      */}
-      <GraphCanvas 
-        key={networkData ? `graph-canvas-${networkData.nodes.length}` : 'loading'}
-        data={networkData as NetworkData}
-        isLoading={isLoading}
-        filteredClusters={activeFilters}
-        searchTerm={searchTerm}
-        onNodeClick={handleNodeClick}
-        onAddClick={toggleFabMenu}
-      />
+      {!isMinimized && (
+        <ReactFlowProvider>
+        <div className="glass rounded-xl p-4 mb-6 h-[600px] relative">
+          {/* Reset-View Button */}
+          <button
+            className="absolute top-2 right-2 z-10 bg-white bg-opacity-80 p-2 rounded shadow hover:bg-opacity-100"
+            onClick={() => rfInstance?.fitView()}
+          >Reset View</button>
+          <ReactFlow
+            nodes={flowNodes}
+            edges={flowEdges}
+            nodeTypes={nodeTypes}
+            onInit={setRfInstance}
+            onNodesChange={(changes: NodeChange[]) => setFlowNodes(nds => applyNodeChanges(changes, nds))}
+            onEdgesChange={(changes: EdgeChange[]) => setFlowEdges(eds => applyEdgeChanges(changes, eds))}
+            onNodeClick={(event, node) => node.data.originalNode && handleNodeClick(node.data.originalNode)}
+            onNodeDragStop={(_, node) => {
+              const saved = JSON.parse(localStorage.getItem('nodePositions') || '{}');
+              saved[node.id] = node.position;
+              localStorage.setItem('nodePositions', JSON.stringify(saved));
+            }}
+          >
+            <Controls showFitView={false} />
+            <Background />
+          </ReactFlow>
+        </div>
+        </ReactFlowProvider>
+      )}
+      
+      {/* Floating Action Button Toggle */}
+      <div className="fixed right-6 bottom-6 z-40">
+        <button
+          className="glass p-3 rounded-full shadow-lg hover:bg-white/20 transition-colors"
+          onClick={toggleFabMenu}
+        >
+          {isFabOpen ? <X className="h-6 w-6" /> : <Plus className="h-6 w-6" />}
+        </button>
+      </div>
       
       {/* Floating Action Button Menu */}
       {isFabOpen && (
-        <div className="fixed right-6 bottom-24 z-30 flex flex-col-reverse items-end space-y-reverse space-y-2">
-          <div className="glass rounded-lg p-2 shadow-lg">
+        <div className="fixed right-6 bottom-24 z-30 flex flex-col items-end space-y-2">
+          <div className="glass rounded-lg p-2 shadow-lg flex flex-col items-center space-y-2">
             <button 
-              className="flex items-center w-full px-3 py-2 rounded-md hover:bg-white/20 transition-colors"
+              className="bg-white bg-opacity-80 p-2 rounded-full shadow hover:bg-opacity-100 transition-colors"
               onClick={handleAddContactClick}
             >
-              <UserPlus className="h-5 w-5 mr-2" />
-              <span>Kontakt hinzufügen</span>
+              <UserPlus className="h-6 w-6" />
             </button>
             <button 
-              className="flex items-center w-full px-3 py-2 rounded-md hover:bg-white/20 transition-colors"
+              className="bg-white bg-opacity-80 p-2 rounded-full shadow hover:bg-opacity-100 transition-colors"
               onClick={handleAddClusterClick}
             >
-              <FolderPlus className="h-5 w-5 mr-2" />
-              <span>Bereich hinzufügen</span>
+              <FolderPlus className="h-6 w-6" />
             </button>
           </div>
         </div>
@@ -205,6 +348,8 @@ const NetworkPage: React.FC = () => {
       <AddClusterModal 
         isOpen={isAddClusterModalOpen}
         onClose={handleModalClose}
+        isEdit={isClusterEditMode}
+        cluster={isClusterEditMode && activeCluster ? activeCluster : undefined}
       />
       
       <ContactDetailDrawer 
@@ -213,6 +358,17 @@ const NetworkPage: React.FC = () => {
         contact={activeContact}
         clusters={clusters || []}
         onEditClick={handleEditClick}
+        onNodeClick={handleNodeClick}
+      />
+      <ClusterDetailDrawer
+        isOpen={isClusterDrawerOpen}
+        onClose={() => setIsClusterDrawerOpen(false)}
+        cluster={activeCluster}
+        contactCount={networkData?.nodes.filter(n => n.type === 'contact' && n.clusterId === activeCluster?.originalId).length || 0}
+        contacts={networkData?.nodes.filter(n => n.type === 'contact' && n.clusterId === activeCluster?.originalId) || []}
+        onEditClick={handleClusterEditClick}
+        onDeleteClick={handleClusterDeleteClick}
+        onNodeClick={handleNodeClick}
       />
     </main>
   );
