@@ -144,11 +144,6 @@ body {
   to { stroke-dashoffset: 0; }
 }
 
-/* Viewport Zoom/Pan Transition */
-.react-flow__viewport {
-  transition: transform 0.3s ease-in-out;
-}
-
 /* Drag feedback on Node */
 .react-flow__node.is-dragging {
   transform: scale(1.1) !important;
