@@ -149,13 +149,28 @@ export class MemStorage implements IStorage {
 
   async createContact(insertContact: InsertContact): Promise<Contact> {
     const id = this.contactCurrentId++;
-    const contact: Contact = { 
+    const contact: Contact = {
       id,
       name: insertContact.name,
       role: insertContact.role,
       email: insertContact.email || null,
       phone: insertContact.phone || null,
       notes: insertContact.notes || null,
+      company: insertContact.company || null,
+      department: insertContact.department || null,
+      emails: insertContact.emails ?? [],
+      phones: insertContact.phones ?? [],
+      socialLinks: insertContact.socialLinks ?? {},
+      tags: insertContact.tags ?? [],
+      address: insertContact.address ?? {},
+      firstContact: insertContact.firstContact || null,
+      lastContact: insertContact.lastContact || null,
+      nextFollowUp: insertContact.nextFollowUp || null,
+      relationshipStatus: insertContact.relationshipStatus || null,
+      relationshipStrength: insertContact.relationshipStrength ?? null,
+      profileImage: insertContact.profileImage || null,
+      communicationPreferences: insertContact.communicationPreferences ?? {},
+      customFields: insertContact.customFields ?? [],
       clusterId: insertContact.clusterId
     };
     
@@ -208,6 +223,21 @@ export class MemStorage implements IStorage {
       email: contactUpdate.email !== undefined ? (contactUpdate.email || null) : existingContact.email,
       phone: contactUpdate.phone !== undefined ? (contactUpdate.phone || null) : existingContact.phone,
       notes: contactUpdate.notes !== undefined ? (contactUpdate.notes || null) : existingContact.notes,
+      company: contactUpdate.company !== undefined ? contactUpdate.company : existingContact.company,
+      department: contactUpdate.department !== undefined ? contactUpdate.department : existingContact.department,
+      emails: contactUpdate.emails !== undefined ? contactUpdate.emails : existingContact.emails,
+      phones: contactUpdate.phones !== undefined ? contactUpdate.phones : existingContact.phones,
+      socialLinks: contactUpdate.socialLinks !== undefined ? contactUpdate.socialLinks : existingContact.socialLinks,
+      tags: contactUpdate.tags !== undefined ? contactUpdate.tags : existingContact.tags,
+      address: contactUpdate.address !== undefined ? contactUpdate.address : existingContact.address,
+      firstContact: contactUpdate.firstContact !== undefined ? contactUpdate.firstContact : existingContact.firstContact,
+      lastContact: contactUpdate.lastContact !== undefined ? contactUpdate.lastContact : existingContact.lastContact,
+      nextFollowUp: contactUpdate.nextFollowUp !== undefined ? contactUpdate.nextFollowUp : existingContact.nextFollowUp,
+      relationshipStatus: contactUpdate.relationshipStatus !== undefined ? contactUpdate.relationshipStatus : existingContact.relationshipStatus,
+      relationshipStrength: contactUpdate.relationshipStrength !== undefined ? contactUpdate.relationshipStrength : existingContact.relationshipStrength,
+      profileImage: contactUpdate.profileImage !== undefined ? contactUpdate.profileImage : existingContact.profileImage,
+      communicationPreferences: contactUpdate.communicationPreferences !== undefined ? contactUpdate.communicationPreferences : existingContact.communicationPreferences,
+      customFields: contactUpdate.customFields !== undefined ? contactUpdate.customFields : existingContact.customFields,
       clusterId: contactUpdate.clusterId !== undefined ? contactUpdate.clusterId : existingContact.clusterId
     };
     
@@ -283,6 +313,20 @@ export class MemStorage implements IStorage {
         email: contact.email || undefined,
         phone: contact.phone || undefined,
         notes: contact.notes || undefined,
+        // Erweiterte Felder mit Typassertionen
+        emails: contact.emails as string[],
+        phones: contact.phones as string[],
+        socialLinks: contact.socialLinks as Record<string, string>,
+        tags: contact.tags as string[],
+        address: contact.address as Record<string, string>,
+        firstContact: contact.firstContact ?? undefined,
+        lastContact: contact.lastContact ?? undefined,
+        nextFollowUp: contact.nextFollowUp ?? undefined,
+        relationshipStatus: contact.relationshipStatus ?? undefined,
+        relationshipStrength: contact.relationshipStrength ?? undefined,
+        profileImage: contact.profileImage ?? undefined,
+        communicationPreferences: contact.communicationPreferences as Record<string, unknown>,
+        customFields: contact.customFields as string[],
         clusterId: contact.clusterId,
         originalId: contact.id // Keep the original ID for reference
       }))

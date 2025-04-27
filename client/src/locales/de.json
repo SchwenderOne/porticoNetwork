@@ -34,5 +34,50 @@
   "notFound": {
     "title": "404 Seite nicht gefunden",
     "description": "Hast du vergessen, die Seite zur Navigation hinzuzufügen?"
+  },
+  "networkFullScreen": {
+    "title": "Netzwerk",
+    "subtitle": "Vollbild-Ansicht des Netzwerks"
+  },
+  "addContact": {
+    "title": "Neuen Kontakt hinzufügen",
+    "editTitle": "Kontakt bearbeiten",
+    "name": "Name",
+    "role": "Rolle/Position",
+    "email": "E-Mail",
+    "phone": "Telefon",
+    "notes": "Notizen",
+    "placeholder": {
+      "name": "Max Mustermann",
+      "role": "CEO, Investor, Entwickler...",
+      "email": "email@beispiel.de"
+    },
+    "button": {
+      "cancel": "Abbrechen",
+      "submit": "Hinzufügen",
+      "submitEditing": "Speichern"
+    }
+  },
+  "addCluster": {
+    "title": "Neuen Bereich hinzufügen",
+    "editTitle": "Bereich bearbeiten",
+    "name": "Bereichsname",
+    "color": "Bereichsfarbe",
+    "placeholder": {
+      "name": "z.B. Marketing, Finanzen, Technologie..."
+    },
+    "button": {
+      "cancel": "Abbrechen",
+      "submit": "Hinzufügen",
+      "submitEditing": "Speichern"
+    }
+  },
+  "contactDetails": {
+    "title": "Kontaktdetails",
+    "cluster": "Cluster",
+    "contactInfo": "Kontaktinformationen",
+    "delete": "Kontakt löschen",
+    "deleteConfirm": "Löschen",
+    "cancel": "Abbrechen"
   }
 } 

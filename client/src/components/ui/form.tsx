@@ -103,25 +103,20 @@ const FormLabel = React.forwardRef<
 })
 FormLabel.displayName = "FormLabel"
 
-const FormControl = React.forwardRef<
-  React.ElementRef<typeof Slot>,
-  React.ComponentPropsWithoutRef<typeof Slot>
->(({ ...props }, ref) => {
+// FormControl: Klont nur ein valides Kind mittels React.cloneElement und vergibt id/aria-Props
+const FormControl = React.forwardRef<any, React.PropsWithChildren<{}>>(({ children, ...props }, ref) => {
   const { error, formItemId, formDescriptionId, formMessageId } = useFormField()
-
-  return (
-    <Slot
-      ref={ref}
-      id={formItemId}
-      aria-describedby={
-        !error
-          ? `${formDescriptionId}`
-          : `${formDescriptionId} ${formMessageId}`
-      }
-      aria-invalid={!!error}
-      {...props}
-    />
-  )
+  // Kinder als Array filtern: nur valide React-Elemente
+  const childArray = React.Children.toArray(children).filter(React.isValidElement)
+  if (childArray.length === 0) return null
+  const child = childArray[0] as React.ReactElement
+  return React.cloneElement(child, {
+    ref,
+    id: formItemId,
+    'aria-describedby': !error ? formDescriptionId : `${formDescriptionId} ${formMessageId}`,
+    'aria-invalid': !!error,
+    ...props,
+  })
 })
 FormControl.displayName = "FormControl"
 

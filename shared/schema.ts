@@ -17,6 +17,22 @@ export const contacts = pgTable("contacts", {
   email: text("email"),
   phone: text("phone"),
   notes: text("notes"),
+  company: text("company"),
+  department: text("department"),
+  // Erweiterte Kontaktfelder
+  emails: jsonb("emails"),
+  phones: jsonb("phones"),
+  socialLinks: jsonb("social_links"),
+  tags: jsonb("tags"),
+  address: jsonb("address"),
+  firstContact: text("first_contact"),
+  lastContact: text("last_contact"),
+  nextFollowUp: text("next_follow_up"),
+  relationshipStatus: text("relationship_status"),
+  relationshipStrength: integer("relationship_strength"),
+  profileImage: text("profile_image"),
+  communicationPreferences: jsonb("communication_preferences"),
+  customFields: jsonb("custom_fields"),
   clusterId: integer("cluster_id").notNull(),
 });
 
@@ -41,6 +57,21 @@ export const insertContactSchema = createInsertSchema(contacts).pick({
   email: true,
   phone: true,
   notes: true,
+  company: true,
+  department: true,
+  emails: true,
+  phones: true,
+  socialLinks: true,
+  tags: true,
+  address: true,
+  firstContact: true,
+  lastContact: true,
+  nextFollowUp: true,
+  relationshipStatus: true,
+  relationshipStrength: true,
+  profileImage: true,
+  communicationPreferences: true,
+  customFields: true,
   clusterId: true,
 });
 
@@ -60,11 +91,27 @@ export interface Node {
   type: (typeof nodeTypes)[number];
   name: string;
   role?: string;
+  company?: string;
+  department?: string;
   color?: string;
   clusterId?: number;
   email?: string;
   phone?: string;
   notes?: string;
+  // Erweiterte Kontaktfelder
+  emails?: string[];
+  phones?: string[];
+  socialLinks?: Record<string, string>;
+  tags?: string[];
+  address?: Record<string, string>;
+  firstContact?: string;
+  lastContact?: string;
+  nextFollowUp?: string;
+  relationshipStatus?: string;
+  relationshipStrength?: number;
+  profileImage?: string;
+  communicationPreferences?: Record<string, unknown>;
+  customFields?: string[];
   x?: number;
   y?: number;
   fx?: number | null;

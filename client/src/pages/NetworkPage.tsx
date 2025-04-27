@@ -193,31 +193,47 @@ const NetworkPage: React.FC = () => {
   // Initialisierung von Nodes + Edges bei Daten-Update mit radialem Mind-Map Layout
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem('nodePositions') || '{}');
-    // Container-Dimensionen (ggf. dynamisch ermitteln)
+    // Layout-Parameter
     const width = 800;
     const height = 600;
     const centerX = width / 2;
     const centerY = height / 2;
     const radiusCluster = Math.min(width, height) / 3;
     const radiusContact = radiusCluster * 1.5;
-    // Cluster-Array
-    const clustersArr = networkData?.nodes.filter(n => n.type === 'cluster') || [];
-    const totalClusters = clustersArr.length;
-    // Nodes berechnen
-    const newNodes: Node[] = (networkData?.nodes || []).map((n) => {
+    // Cluster-Knoten und Sektoren
+    const allNodes = networkData?.nodes || [];
+    const clustersArr = allNodes.filter(n => n.type === 'cluster');
+    const totalClusters = clustersArr.length || 1;
+    const sectorWidth = (2 * Math.PI) / totalClusters;
+    // Kontakte gruppieren nach ClusterId
+    const contactNodes = allNodes.filter(n => n.type === 'contact');
+    const contactsByCluster = new Map<number, typeof contactNodes>();
+    contactNodes.forEach(cn => {
+      const cid = cn.clusterId ?? -1;
+      const arr = contactsByCluster.get(cid) || [];
+      arr.push(cn);
+      contactsByCluster.set(cid, arr);
+    });
+    // Neue Knoten berechnen mit sektoraler Verteilung
+    const newNodes: Node[] = allNodes.map(n => {
+      // Falls Position gespeichert, direkt nutzen
       let pos = saved[n.id];
       if (!pos) {
         if (n.id === 'portico') {
           pos = { x: centerX, y: centerY };
         } else if (n.type === 'cluster') {
           const idx = clustersArr.findIndex(c => c.id === n.id);
-          const angle = (idx / totalClusters) * 2 * Math.PI;
+          const angle = idx * sectorWidth;
           pos = { x: centerX + radiusCluster * Math.cos(angle), y: centerY + radiusCluster * Math.sin(angle) };
         } else {
-          // Kontakt-Knoten auf weiterem Ring
-          const clusterNode = clustersArr.find(c => c.originalId === n.clusterId || c.id === `cluster-${n.clusterId}`);
-          const idxCluster = clustersArr.indexOf(clusterNode as any);
-          const angle = (idxCluster / totalClusters) * 2 * Math.PI;
+          // Kontakte logisch um Cluster verteilen
+          const cid = n.clusterId ?? -1;
+          const group = contactsByCluster.get(cid) || [];
+          const idxCluster = clustersArr.findIndex(c => c.originalId === cid || c.id === `cluster-${cid}`);
+          const start = idxCluster * sectorWidth;
+          const count = group.length;
+          const idxContact = group.findIndex(cn => cn.id === n.id);
+          const angle = start + ((idxContact + 1) / (count + 1)) * sectorWidth;
           pos = { x: centerX + radiusContact * Math.cos(angle), y: centerY + radiusContact * Math.sin(angle) };
         }
       }
@@ -225,14 +241,20 @@ const NetworkPage: React.FC = () => {
         id: n.id,
         type: n.type,
         data: {
-          label: n.type === 'cluster' ? t(`cluster.${n.originalId}`) : n.name,
+          label: n.type === 'cluster' ? t(`cluster.${(n as any).originalId}`) : n.name,
           color: n.color,
           originalNode: n,
         },
         position: pos,
       };
     });
-    // Kanten mit dynamischen Verbindungs-Punkten
+    // Persist initial Positionen
+    const updated = { ...saved };
+    newNodes.forEach(n => {
+      if (!updated[n.id]) updated[n.id] = n.position;
+    });
+    localStorage.setItem('nodePositions', JSON.stringify(updated));
+    // Kanten wie bisher
     const newEdges: Edge[] = (networkData?.links || []).map(l => {
       const src = newNodes.find(node => node.id === l.source);
       const tgt = newNodes.find(node => node.id === l.target);
@@ -244,21 +266,11 @@ const NetworkPage: React.FC = () => {
         } else if (src.position.y < tgt.position.y) {
           sourceHandle = 'bottom'; targetHandle = 'top';
         } else {
-          if (src.position.x < tgt.position.x) {
-            sourceHandle = 'right'; targetHandle = 'left';
-          } else {
-            sourceHandle = 'left'; targetHandle = 'right';
-          }
+          sourceHandle = src.position.x < tgt.position.x ? 'right' : 'left';
+          targetHandle = src.position.x < tgt.position.x ? 'left' : 'right';
         }
       }
-      return {
-        id: l.id,
-        source: l.source,
-        target: l.target,
-        type: 'default',
-        sourceHandle,
-        targetHandle,
-      } as Edge;
+      return { id: l.id, source: l.source, target: l.target, type: 'default', sourceHandle, targetHandle } as Edge;
     });
     setFlowNodes(newNodes);
     setFlowEdges(newEdges);

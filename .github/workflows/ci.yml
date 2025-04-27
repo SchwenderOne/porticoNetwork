@@ -28,5 +28,8 @@ jobs:
       - name: TypeScript-Check
         run: npm run check
 
+      - name: Run tests
+        run: npm test
+
       - name: Build client und server
         run: npm run build 

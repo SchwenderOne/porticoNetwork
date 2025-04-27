@@ -123,14 +123,22 @@ const ContactDetailDrawer: React.FC<ContactDetailDrawerProps> = ({
             {/* Contact Details */}
             <div className="mb-6">
               <div className="flex items-center mb-4">
-                <div 
-                  className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-300 to-purple-300 flex items-center justify-center text-white text-xl font-semibold mr-4"
-                  style={{ 
-                    background: contact.clusterId ? getClusterColor(contact.clusterId) : 'rgba(173, 216, 230, 0.45)'
-                  }}
-                >
-                  {getInitials(contact.name)}
-                </div>
+                {contact.profileImage ? (
+                  <img
+                    className="w-16 h-16 rounded-full mr-4 object-cover"
+                    src={contact.profileImage}
+                    alt="Profilbild"
+                  />
+                ) : (
+                  <div
+                    className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-300 to-purple-300 flex items-center justify-center text-white text-xl font-semibold mr-4"
+                    style={{
+                      background: contact.clusterId ? getClusterColor(contact.clusterId) : 'rgba(173, 216, 230, 0.45)'
+                    }}
+                  >
+                    {getInitials(contact.name)}
+                  </div>
+                )}
                 <div>
                   <h4 className="text-lg font-semibold">{contact.name}</h4>
                   <p className="text-gray-600">{contact.role}</p>
@@ -206,6 +214,158 @@ const ContactDetailDrawer: React.FC<ContactDetailDrawerProps> = ({
                   <div className="glass p-3 rounded-lg text-gray-700">
                     {contact.notes}
                   </div>
+                </div>
+              )}
+
+              {/* Organisationsdaten */}
+              {(contact.company || contact.department) && (
+                <div className="mb-4">
+                  <h5 className="text-sm font-medium text-gray-500 mb-2 flex items-center">
+                    <Users className="h-4 w-4 mr-1" />
+                    Organisation
+                  </h5>
+                  <div className="glass p-3 rounded-lg text-gray-700">
+                    {contact.company && <p><strong>Firma:</strong> {contact.company}</p>}
+                    {contact.department && <p><strong>Abteilung:</strong> {contact.department}</p>}
+                  </div>
+                </div>
+              )}
+
+              {/* Weitere E-Mail-Adressen */}
+              {contact.emails && contact.emails.length > 0 && (
+                <div className="mb-4">
+                  <h5 className="text-sm font-medium text-gray-500 mb-2 flex items-center">
+                    <Mail className="h-4 w-4 mr-1" />
+                    Weitere E-Mail-Adressen
+                  </h5>
+                  <ul className="list-disc list-inside text-gray-700">
+                    {contact.emails.map((e, i) => (
+                      <li key={i}><a href={`mailto:${e}`} className="hover:underline">{e}</a></li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Weitere Telefonnummern */}
+              {contact.phones && contact.phones.length > 0 && (
+                <div className="mb-4">
+                  <h5 className="text-sm font-medium text-gray-500 mb-2 flex items-center">
+                    <Phone className="h-4 w-4 mr-1" />
+                    Weitere Telefonnummern
+                  </h5>
+                  <ul className="list-disc list-inside text-gray-700">
+                    {contact.phones.map((p, i) => (
+                      <li key={i}><a href={`tel:${p}`} className="hover:underline">{p}</a></li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Social Links */}
+              {contact.socialLinks && Object.keys(contact.socialLinks).length > 0 && (
+                <div className="mb-4">
+                  <h5 className="text-sm font-medium text-gray-500 mb-2 flex items-center">
+                    <ExternalLink className="h-4 w-4 mr-1" />
+                    Social Links
+                  </h5>
+                  <ul className="list-disc list-inside text-gray-700">
+                    {Object.entries(contact.socialLinks).map(([key, url]) => (
+                      <li key={key}><a href={url} target="_blank" rel="noreferrer" className="hover:underline">{key}: {url}</a></li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Tags */}
+              {contact.tags && contact.tags.length > 0 && (
+                <div className="mb-4">
+                  <h5 className="text-sm font-medium text-gray-500 mb-2 flex items-center">
+                    <Bookmark className="h-4 w-4 mr-1" />
+                    Tags
+                  </h5>
+                  <div className="flex flex-wrap gap-2">
+                    {contact.tags.map((tag, i) => <Badge key={i}>{tag}</Badge>)}
+                  </div>
+                </div>
+              )}
+
+              {/* Adresse */}
+              {contact.address && Object.keys(contact.address).length > 0 && (
+                <div className="mb-4">
+                  <h5 className="text-sm font-medium text-gray-500 mb-2 flex items-center">
+                    <Users className="h-4 w-4 mr-1" />
+                    Adresse
+                  </h5>
+                  <div className="glass p-3 rounded-lg text-gray-700">
+                    {contact.address.street && <p>{contact.address.street}</p>}
+                    {(contact.address.zip || contact.address.city) && <p>{contact.address.zip} {contact.address.city}</p>}
+                    {contact.address.country && <p>{contact.address.country}</p>}
+                    {contact.address.timezone && <p><em>{contact.address.timezone}</em></p>}
+                  </div>
+                </div>
+              )}
+
+              {/* Timeline */}
+              {contact.firstContact && (
+                <div className="mb-4">
+                  <h5 className="text-sm font-medium text-gray-500 mb-2">Erstkontakt</h5>
+                  <p className="text-gray-700">{contact.firstContact}</p>
+                </div>
+              )}
+              {contact.lastContact && (
+                <div className="mb-4">
+                  <h5 className="text-sm font-medium text-gray-500 mb-2">Letzter Kontakt</h5>
+                  <p className="text-gray-700">{contact.lastContact}</p>
+                </div>
+              )}
+              {contact.nextFollowUp && (
+                <div className="mb-4">
+                  <h5 className="text-sm font-medium text-gray-500 mb-2">Nächstes Follow-Up</h5>
+                  <p className="text-gray-700">{contact.nextFollowUp}</p>
+                </div>
+              )}
+
+              {/* Beziehung */}
+              {contact.relationshipStatus && (
+                <div className="mb-4">
+                  <h5 className="text-sm font-medium text-gray-500 mb-2">Beziehungsstatus</h5>
+                  <p className="text-gray-700">{contact.relationshipStatus}</p>
+                </div>
+              )}
+              {contact.relationshipStrength != null && (
+                <div className="mb-4">
+                  <h5 className="text-sm font-medium text-gray-500 mb-2">Beziehungsstärke</h5>
+                  <p className="text-gray-700">{contact.relationshipStrength} / 5</p>
+                </div>
+              )}
+
+              {/* Profilbild */}
+              {contact.profileImage && (
+                <div className="mb-4">
+                  <h5 className="text-sm font-medium text-gray-500 mb-2">Profilbild</h5>
+                  <img src={contact.profileImage} alt="Profilbild" className="w-24 h-24 rounded-full object-cover" />
+                </div>
+              )}
+
+              {/* Kommunikationspräferenzen */}
+              {contact.communicationPreferences && (
+                <div className="mb-4">
+                  <h5 className="text-sm font-medium text-gray-500 mb-2">Kommunikationspräferenzen</h5>
+                  <div className="flex space-x-4">
+                    {Boolean(contact.communicationPreferences.email) && <Badge>E-Mail</Badge>}
+                    {Boolean(contact.communicationPreferences.phone) && <Badge>Telefon</Badge>}
+                    {Boolean(contact.communicationPreferences.chat) && <Badge>Chat</Badge>}
+                  </div>
+                </div>
+              )}
+
+              {/* Custom-Felder */}
+              {contact.customFields && contact.customFields.length > 0 && (
+                <div className="mb-4">
+                  <h5 className="text-sm font-medium text-gray-500 mb-2">Benutzerdefinierte Felder</h5>
+                  <ul className="list-disc list-inside text-gray-700">
+                    {contact.customFields.map((cf, i) => <li key={i}>{cf}</li>)}
+                  </ul>
                 </div>
               )}
             </div>

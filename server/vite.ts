@@ -3,7 +3,6 @@ import fs from "fs";
 import path from "path";
 import { createServer as createViteServer, createLogger } from "vite";
 import { type Server } from "http";
-import react from "@vitejs/plugin-react";
 import { nanoid } from "nanoid";
 import { fileURLToPath } from "url";
 
@@ -30,6 +29,7 @@ export async function setupVite(app: Express, server: Server) {
 
   const vite = await createViteServer({
     configFile: path.resolve(__dirname, "..", "vite.config.ts"),
+    root: path.resolve(__dirname, "..", "client"),
     server: serverOptions,
     appType: "custom",
   });
