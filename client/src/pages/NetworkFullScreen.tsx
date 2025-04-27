@@ -193,14 +193,14 @@ const NetworkFullScreen: React.FC = () => {
       <ContactDetailDrawer isOpen={isDrawerOpen} onClose={()=>setIsDrawerOpen(false)} contact={activeContact} clusters={clusters} onEditClick={handleEditClick} onNodeClick={handleNodeClick} />
       <ClusterDetailDrawer 
         isOpen={isClusterDrawerOpen} 
-        onClose={()=>setIsClusterDrawerOpen(false)} 
+        onClose={() => setIsClusterDrawerOpen(false)} 
         cluster={activeCluster} 
-        contactCount={flowNodes.filter(n=>n.type==='contact'&&n.data.originalNode.clusterId===activeCluster?.originalId).length} 
-        contacts={flowNodes.filter(n=>n.type==='contact'&&n.data.originalNode.clusterId===activeCluster?.originalId).map(n=>n.data.originalNode)} 
+        contactCount={flowNodes.filter(n => n.type === 'contact' && n.data.originalNode.clusterId === activeCluster?.originalId).length} 
+        contacts={flowNodes.filter(n => n.type === 'contact' && n.data.originalNode.clusterId === activeCluster?.originalId).map(n => n.data.originalNode)} 
         onEditClick={handleClusterEditClick} 
         onDeleteClick={handleClusterDeleteClick} 
         onNodeClick={handleNodeClick} 
-        onContactEditClick={contactNode => { setIsClusterDrawerOpen(false); handleEditClick(contactNode); }}
+        onContactEditClick={contactNode => { handleEditClick(contactNode); }}
       />
     </main>
   );
