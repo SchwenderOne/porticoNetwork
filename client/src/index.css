@@ -133,3 +133,31 @@ body {
 .nodes rect {
   cursor: move;
 }
+
+/* Edge draw animation */
+.reactflow__edge-path {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: draw-edge 0.5s ease forwards;
+}
+@keyframes draw-edge {
+  to { stroke-dashoffset: 0; }
+}
+
+/* Viewport Zoom/Pan Transition */
+.react-flow__viewport {
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Drag feedback on Node */
+.react-flow__node.is-dragging {
+  transform: scale(1.1) !important;
+}
+
+/* Checkbox background transition */
+.checkbox-input + .checkbox-label {
+  transition: background-color 0.2s ease;
+}
+.checkbox-input:checked + .checkbox-label {
+  background-color: rgba(59, 130, 246, 0.2);
+}

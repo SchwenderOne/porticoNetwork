@@ -244,9 +244,9 @@ const AddContactModal: React.FC<AddContactModalProps> = ({
             onClick={onClose}
           />
           <motion.div
-            initial={{ scale: 0.9 }}
-            animate={{ scale: 1 }}
-            exit={{ scale: 0.9 }}
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
             transition={{ duration: 0.3 }}
             className="glass rounded-2xl p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto z-60 fixed inset-0 m-auto"
           >
@@ -260,6 +260,18 @@ const AddContactModal: React.FC<AddContactModalProps> = ({
               >
                 <X className="h-6 w-6" />
               </button>
+            </div>
+            
+            {/* Wizard-Step-Progress */}
+            <div className="mb-4">
+              <div className="w-full h-1 bg-gray-200 rounded">
+                <motion.div
+                  className="h-full bg-blue-500 rounded"
+                  initial={{ width: `${((step-1)/totalSteps)*100}%` }}
+                  animate={{ width: `${(step/totalSteps)*100}%` }}
+                  transition={{ duration: 0.3 }}
+                />
+              </div>
             </div>
             
             <Form {...form}>
