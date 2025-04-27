@@ -1,0 +1,38 @@
+{
+  "settings": {
+    "title": "Einstellungen",
+    "subtitle": "Anwendungseinstellungen anpassen",
+    "darkMode": "Dunkelmodus",
+    "refreshInterval": "Aktualisierungsintervall (Sek.)",
+    "language": "Sprache",
+    "deutsch": "Deutsch",
+    "english": "English"
+  },
+  "filter": "Filter:",
+  "searchPlaceholder": "Suche nach Namen oder Rolle...",
+  "network": {
+    "title": "Portico Netzwerk Visualisierung",
+    "subtitle": "Erkunden und verwalten Sie Ihre Kontakte und Cluster in einer interaktiven Mind-Map Darstellung.",
+    "resetView": "Ansicht zurücksetzen"
+  },
+  "cluster": {
+    "1": "Marketing",
+    "2": "Finanzen",
+    "3": "Technologie",
+    "4": "Vertrieb"
+  },
+  "contacts": {
+    "title": "Kontakte",
+    "subtitle": "Übersicht aller Kontakte im Netzwerk"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "network": "Netzwerk",
+    "contacts": "Kontakte",
+    "settings": "Einstellungen"
+  },
+  "notFound": {
+    "title": "404 Seite nicht gefunden",
+    "description": "Hast du vergessen, die Seite zur Navigation hinzuzufügen?"
+  }
+} 

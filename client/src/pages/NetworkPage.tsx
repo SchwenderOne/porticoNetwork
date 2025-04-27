@@ -21,9 +21,11 @@ import { useToast } from '@/hooks/use-toast';
 import ReactFlow, { ReactFlowProvider, Controls, Background, Node, Edge, applyNodeChanges, applyEdgeChanges, NodeChange, EdgeChange, Position, ReactFlowInstance } from 'reactflow';
 import { nodeTypes } from '@/components/FlowNodes';
 import 'reactflow/dist/style.css';
+import { useTranslation } from 'react-i18next';
 
 const NetworkPage: React.FC = () => {
   const { toast } = useToast();
+  const { t } = useTranslation();
   // State for UI controls
   const [isAddContactModalOpen, setIsAddContactModalOpen] = useState(false);
   const [isAddClusterModalOpen, setIsAddClusterModalOpen] = useState(false);
@@ -219,7 +221,16 @@ const NetworkPage: React.FC = () => {
           pos = { x: centerX + radiusContact * Math.cos(angle), y: centerY + radiusContact * Math.sin(angle) };
         }
       }
-      return { id: n.id, type: n.type, data: { label: n.name, color: n.color, originalNode: n }, position: pos };
+      return {
+        id: n.id,
+        type: n.type,
+        data: {
+          label: n.type === 'cluster' ? t(`cluster.${n.originalId}`) : n.name,
+          color: n.color,
+          originalNode: n,
+        },
+        position: pos,
+      };
     });
     // Kanten mit dynamischen Verbindungs-Punkten
     const newEdges: Edge[] = (networkData?.links || []).map(l => {

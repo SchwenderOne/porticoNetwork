@@ -1,0 +1,38 @@
+{
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Adjust application settings",
+    "darkMode": "Dark Mode",
+    "refreshInterval": "Refresh Interval (sec.)",
+    "language": "Language",
+    "deutsch": "Deutsch",
+    "english": "English"
+  },
+  "filter": "Filter:",
+  "searchPlaceholder": "Search by name or role...",
+  "network": {
+    "title": "Portico Network Visualization",
+    "subtitle": "Explore and manage your contacts and clusters in an interactive mind-map layout.",
+    "resetView": "Reset view"
+  },
+  "cluster": {
+    "1": "Marketing",
+    "2": "Finance",
+    "3": "Technology",
+    "4": "Sales"
+  },
+  "contacts": {
+    "title": "Contacts",
+    "subtitle": "Overview of all contacts in the network"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "network": "Network",
+    "contacts": "Contacts",
+    "settings": "Settings"
+  },
+  "notFound": {
+    "title": "404 Page Not Found",
+    "description": "Did you forget to add the page to the router?"
+  }
+} 
