@@ -126,91 +126,96 @@ const AddClusterModal: React.FC<AddClusterModalProps> = ({
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 m-auto glass rounded-2xl p-6 max-w-md w-full mx-4 flex flex-col h-[80vh] z-60"
-            onKeyDown={e => e.key === 'Escape' && onClose()}
+            className="fixed inset-0 flex items-center justify-center p-4 z-50"
+            onClick={onClose}
             tabIndex={-1}
           >
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold">
-                {isEdit ? 'Bereich bearbeiten' : 'Neuen Bereich hinzufügen'}
-              </h3>
-              <button 
-                className="text-gray-500 hover:text-gray-700"
-                onClick={onClose}
-              >
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-            
-            {/* Formular & Vorschau container mit automatischem Scroll bei Überhang */}
-            <div className="flex-1 overflow-y-auto">
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="grid md:grid-cols-2 gap-6 h-full">
-                  {/* Linke Spalte: Formularfelder */}
-                  <div className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Bereichsname</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="z.B. Marketing, Finanzen, Technologie..."
-                              {...field}
-                              ref={nameInputRef}
-                              aria-invalid={form.formState.errors.name ? true : false}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="color"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Bereichsfarbe</FormLabel>
-                          <div className="grid grid-cols-4 gap-2 mb-2">
-                            {colorOptions.map((color, index) => (
-                              <div
-                                key={index}
-                                className={`h-10 rounded-md cursor-pointer border-2 ${field.value === color ? 'border-primary' : 'border-transparent'}`}
-                                style={{ backgroundColor: color }}
-                                onClick={() => form.setValue('color', color)}
+            <div
+              className="glass rounded-2xl p-6 w-full max-w-md max-h-[90vh] flex flex-col overflow-y-auto"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-semibold">
+                  {isEdit ? 'Bereich bearbeiten' : 'Neuen Bereich hinzufügen'}
+                </h3>
+                <button 
+                  className="text-gray-500 hover:text-gray-700"
+                  onClick={onClose}
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+              
+              {/* Formular & Vorschau container mit automatischem Scroll bei Überhang */}
+              <div className="flex-1 overflow-y-auto">
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="grid md:grid-cols-2 gap-6 h-full">
+                    {/* Linke Spalte: Formularfelder */}
+                    <div className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Bereichsname</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="z.B. Marketing, Finanzen, Technologie..."
+                                {...field}
+                                ref={nameInputRef}
+                                aria-invalid={form.formState.errors.name ? true : false}
                               />
-                            ))}
-                          </div>
-                          <FormControl>
-                            <Input
-                              type="text"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  {/* Rechte Spalte: Vorschau und Buttons */}
-                  <div className="flex flex-col h-full">
-                    {/* Live-Vorschau */}
-                    <div className="flex items-center justify-center p-4 bg-white/10 rounded-lg">
-                      <div className="glass p-4 rounded-lg border" style={{ backgroundColor: form.watch('color') }}>
-                        <strong>{form.watch('name') || 'Vorschau'}</strong>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="color"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Bereichsfarbe</FormLabel>
+                            <div className="grid grid-cols-4 gap-2 mb-2">
+                              {colorOptions.map((color, index) => (
+                                <div
+                                  key={index}
+                                  className={`h-10 rounded-md cursor-pointer border-2 ${field.value === color ? 'border-primary' : 'border-transparent'}`}
+                                  style={{ backgroundColor: color }}
+                                  onClick={() => form.setValue('color', color)}
+                                />
+                              ))}
+                            </div>
+                            <FormControl>
+                              <Input
+                                type="text"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    {/* Rechte Spalte: Vorschau und Buttons */}
+                    <div className="flex flex-col h-full">
+                      {/* Live-Vorschau */}
+                      <div className="flex items-center justify-center p-4 bg-white/10 rounded-lg">
+                        <div className="glass p-4 rounded-lg border" style={{ backgroundColor: form.watch('color') }}>
+                          <strong>{form.watch('name') || 'Vorschau'}</strong>
+                        </div>
+                      </div>
+                      {/* Buttons */}
+                      <div className="mt-auto flex justify-end space-x-3 pt-4">
+                        <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>Abbrechen</Button>
+                        <Button type="submit" className="bg-gradient-to-r from-blue-500 to-purple-500 hover:opacity-90" disabled={isSubmitting}>
+                          {isSubmitting ? (isEdit ? 'Wird aktualisiert…' : 'Wird hinzugefügt…') : (isEdit ? 'Speichern' : 'Hinzufügen')}
+                        </Button>
                       </div>
                     </div>
-                    {/* Buttons */}
-                    <div className="mt-auto flex justify-end space-x-3 pt-4">
-                      <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>Abbrechen</Button>
-                      <Button type="submit" className="bg-gradient-to-r from-blue-500 to-purple-500 hover:opacity-90" disabled={isSubmitting}>
-                        {isSubmitting ? (isEdit ? 'Wird aktualisiert…' : 'Wird hinzugefügt…') : (isEdit ? 'Speichern' : 'Hinzufügen')}
-                      </Button>
-                    </div>
-                  </div>
-                </form>
-              </Form>
+                  </form>
+                </Form>
+              </div>
             </div>
           </motion.div>
         </>
