@@ -16,8 +16,13 @@
 - Fuzzy-Suche und erweiterte Filtermöglichkeiten
 - Modernes Glassmorphism-Design für eine ansprechende UI
 - Farbcodierte Cluster und Floating Action Button für Hauptaktionen
+- Flüssige Übergangsanimationen für Knoten, Modals und interne Komponenten (framer-motion)
+- Skeleton-Loader für Ladezustände in Filterleiste und Netzwerk-Canvas
+- Responsive Vollbild-Ansicht mit optimierter Filterbar und minimalem UI-Rausch
 
 ## User Experience Ziele
 - Intuitive Bedienbarkeit und schnelle Reaktionszeiten
 - Konsistente, hochwertige Optik durch Glassmorphism
 - Responsive Verhalten für Desktop- und Tablet-Displays
+- Nahtlose Animationen und Ladeindikatoren für ein flüssiges Nutzungserlebnis
+- Scrollbare Modals für alle Bildschirmgrößen und vollständige Inhaltsanzeige
